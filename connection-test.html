@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instamart WBR — Connection Test</title>
+<style>
+  :root{
+    --bg:#0f1216; --panel:#171b21; --panel2:#1e232b; --line:#2a313b;
+    --ink:#e7ecf2; --muted:#95a1b1; --accent:#ff7a00; --accent2:#4aa8ff;
+    --ok:#2ecc71; --okbg:#12351f; --warn:#f5c542; --warnbg:#3a3212;
+    --bad:#ff5a5a; --badbg:#3a1717; --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  header{padding:20px 24px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#181d24,#12151b)}
+  h1{margin:0 0 4px;font-size:20px;letter-spacing:.2px}
+  h1 .im{color:var(--accent)}
+  .sub{color:var(--muted);font-size:13px;max-width:920px}
+  .wrap{padding:20px 24px;max-width:1200px;margin:0 auto}
+  .bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  button{background:var(--accent);color:#111;border:0;border-radius:8px;
+    padding:10px 16px;font-weight:600;cursor:pointer;font-size:14px}
+  button:disabled{opacity:.5;cursor:default}
+  a{color:var(--accent2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;margin-bottom:16px}
+  .card h2{margin:0 0 12px;font-size:15px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+  .summary{display:flex;gap:16px;flex-wrap:wrap}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+    padding:12px 16px;min-width:140px}
+  .stat b{display:block;font-size:26px;line-height:1.1}
+  .stat span{color:var(--muted);font-size:12px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+  td.grain{font-weight:600;white-space:nowrap}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600}
+  .pill.ok{background:var(--okbg);color:var(--ok)}
+  .pill.bad{background:var(--badbg);color:var(--bad)}
+  .pill.warn{background:var(--warnbg);color:var(--warn)}
+  .pill.run{background:#1b2b3a;color:var(--accent2)}
+  .pill.idle{background:var(--panel2);color:var(--muted)}
+  .mono{font-family:var(--mono);font-size:12px}
+  .muted{color:var(--muted)}
+  .err{color:var(--bad);font-size:12px;max-width:340px}
+  .cols{color:var(--muted);font-size:12px;max-width:300px;word-break:break-word}
+  .kv{display:grid;grid-template-columns:200px 1fr;gap:6px 14px;font-size:13px}
+  .kv .k{color:var(--muted)}
+  .note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
+  code{background:var(--panel2);padding:1px 6px;border-radius:5px;font-family:var(--mono);font-size:12px}
+  .banner{border:1px solid var(--line);border-left:3px solid var(--accent2);
+    background:#131a22;border-radius:8px;padding:10px 14px;font-size:13px;color:#cdd7e3;margin-bottom:16px;line-height:1.6}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="im">Instamart</span> WBR — Connection Test</h1>
+  <div class="sub">Step 1 · Proves the dashboard reads your <b>live</b> Google Sheet. It pulls the Config tab and every grain's source link straight from the template workbook, in the browser, with no login and no backend (Google <code>gviz</code> via JSONP).</div>
+</header>
+
+<div class="wrap">
+  <div class="bar">
+    <button id="run">Re-run test</button>
+    <span class="muted">Template workbook: <a id="tmplLink" target="_blank" rel="noopener">open in Sheets</a></span>
+    <span class="muted">· page origin: <span id="origin" class="mono"></span></span>
+  </div>
+
+  <div class="card">
+    <h2>Verdict</h2>
+    <div class="summary" id="summary">
+      <div class="stat"><b id="s_conf">—</b><span>Config read</span></div>
+      <div class="stat"><b id="s_real">—</b><span class="muted">grains with a real source</span></div>
+      <div class="stat"><b id="s_place">—</b><span class="muted">still placeholders</span></div>
+      <div class="stat"><b id="s_pub">—</b><span class="muted">published sources</span></div>
+    </div>
+    <div class="note" id="verdict"></div>
+  </div>
+
+  <div class="banner" id="banner">
+    <b>What this proves.</b> ✅ The dashboard reads your <b>template</b> live from Google — the control layer that holds every source link. That is the "is it connected to the sheet?" question, and the answer is yes.<br>
+    <b>What's next (Step 2).</b> Following each link into the real (1-lakh-row) source sheets and pulling rows needs a tiny <b>Netlify reader</b>: the published sources are public but CORS-blocks a browser <code>fetch()</code>, and 1L rows shouldn't be shipped raw to the browser anyway. The reader fetches server-side and aggregates, so the dashboard stays fast.
+  </div>
+
+  <div class="card">
+    <h2>Config tab — global settings (kept in the template)</h2>
+    <div class="kv" id="configKV"><div class="muted">Reading…</div></div>
+  </div>
+
+  <div class="card">
+    <h2>16 data grains — live from the template</h2>
+    <table>
+      <thead><tr>
+        <th>#</th><th>Grain (tab)</th><th>Source</th><th>Status</th>
+        <th>Source tab</th><th>Expected columns (from notes)</th><th>Link</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="note">Every value here is read live from your workbook via <code>gviz</code> JSONP. <b>real</b> = a source link is filled in; <b>placeholder</b> = still the template's <code>EXAMPLE_SHEET_ID</code>, to be filled later.</div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+ * Instamart WBR — Connection Test  (Step 1, standalone, no dependencies)
+ * --------------------------------------------------------------------------
+ * Reads the TEMPLATE workbook (shared "anyone with link") entirely in the
+ * browser using Google's gviz endpoint via JSONP (a <script> tag with a
+ * responseHandler callback). JSONP bypasses CORS, so this works from file://
+ * and from any deployed origin with no server. This is exactly how the real
+ * dashboard's control layer will read the source links.
+ * ========================================================================== */
+
+const TEMPLATE_ID = "1usOzp94Pxnn4Qv0TiYDDsBsa8QkQplswGHj46vTFTrk";
+
+// 16 data grains, in the order the sync reads them (Config handled separately).
+const GRAINS = [
+  "Curve","PnL","Categories","SKUs","CategoryHistory","WeeklyTrend",
+  "Availability_Weekly","Availability_Stock","Availability_Bench",
+  "ActionRegister","JBP","JBP_History","Marketing",
+  "Keywords_WoW","Keywords_Monthly","Demand"
+];
+
+document.getElementById("origin").textContent = location.origin;
+document.getElementById("tmplLink").href =
+  "https://docs.google.com/spreadsheets/d/" + TEMPLATE_ID + "/edit";
+
+/* ---- gviz over JSONP: returns {cols:[labels], rows:[[...]]} -------------- */
+function gvizJsonp(tab, range, raw){
+  return new Promise((resolve, reject)=>{
+    const cb = "__gv" + Math.random().toString(36).slice(2);
+    const s = document.createElement("script");
+    let settled = false;
+    const timer = setTimeout(()=>{ if(!settled){ finish(); reject(new Error("timed out")); } }, 20000);
+    function finish(){ settled = true; clearTimeout(timer); delete window[cb]; s.remove(); }
+    window[cb] = (d)=>{
+      if(settled) return; finish();
+      if(d && d.status === "error"){
+        const e = d.errors && d.errors[0];
+        return reject(new Error((e && (e.detailed_message || e.message)) || "gviz error"));
+      }
+      const table = d.table || {};
+      const cols = (table.cols || []).map(c => String((c && c.label) || "").trim());
+      // raw => keep c.v (needed for URLs); else prefer formatted c.f for display
+      const rows = (table.rows || []).map(r => (r.c || []).map(c =>
+        c ? (raw ? c.v : (c.f != null ? c.f : c.v)) : null));
+      resolve({ cols, rows });
+    };
+    s.onerror = ()=>{ if(!settled){ finish(); reject(new Error("script error (sheet not shared / offline)")); } };
+    let u = "https://docs.google.com/spreadsheets/d/" + TEMPLATE_ID +
+            "/gviz/tq?tqx=out:json;responseHandler:" + cb + "&sheet=" + encodeURIComponent(tab);
+    if(range) u += "&range=" + encodeURIComponent(range);
+    s.src = u;
+    document.head.appendChild(s);
+  });
+}
+/* Recover the FULL grid: gviz may consume row 1 as column labels. */
+function fullGrid({cols, rows}){
+  return cols.some(c => c && c.length) ? [cols].concat(rows) : rows;
+}
+
+/* ---- classify a source link --------------------------------------------- */
+function classify(url){
+  const u = String(url || "").trim();
+  if(!u) return { kind:"empty", label:"empty", cls:"idle" };
+  if(/EXAMPLE_SHEET_ID/i.test(u)) return { kind:"placeholder", label:"placeholder", cls:"warn" };
+  if(u.indexOf("/d/e/") >= 0 || u.indexOf("/pub") >= 0) return { kind:"published", label:"published", cls:"ok" };
+  if(u.indexOf("/spreadsheets/d/") >= 0) return { kind:"shared", label:"shared link", cls:"ok" };
+  return { kind:"other", label:"link", cls:"ok" };
+}
+
+/* ---- DOM helpers -------------------------------------------------------- */
+const $ = (id)=>document.getElementById(id);
+function el(t,c,x){ const e=document.createElement(t); if(c)e.className=c; if(x!=null)e.textContent=x; return e; }
+function pill(c,x){ return el("span","pill "+c,x); }
+
+function buildRows(){
+  const tb = $("rows"); tb.innerHTML = "";
+  GRAINS.forEach((g,i)=>{
+    const tr = el("tr"); tr.id = "row_"+g;
+    tr.appendChild(el("td","muted", String(i+1)));
+    tr.appendChild(el("td","grain", g));
+    const sc = el("td"); sc.appendChild(pill("run","…")); tr.appendChild(sc); // source
+    tr.appendChild(el("td","muted","—"));   // status
+    tr.appendChild(el("td","mono muted","—"));// source tab
+    tr.appendChild(el("td","cols muted","—"));// expected columns
+    tr.appendChild(el("td","muted","—"));    // link
+    tb.appendChild(tr);
+  });
+}
+function set(g, col, node){
+  const td = $("row_"+g).children[col];
+  td.innerHTML=""; td.className = td.className.replace(/\bmuted\b/,"").trim();
+  if(typeof node === "string") td.textContent = node; else td.appendChild(node);
+}
+
+/* ---- read one grain's link row ------------------------------------------ */
+async function readGrain(g){
+  set(g,2, pill("run","reading"));
+  let grid;
+  try{
+    grid = fullGrid(await gvizJsonp(g, "A1:F2", true)); // raw: keep URL text
+  }catch(e){
+    set(g,2, pill("bad","FAIL"));
+    set(g,6, el("div","err", e.message));
+    return { g, ok:false };
+  }
+  const headers = (grid[0]||[]).map(h => String(h||"").trim().toLowerCase());
+  const row2 = grid[1] || [];
+  const val = (name,pos)=>{ const k=headers.indexOf(name); return String((k>=0?row2[k]:row2[pos]) ?? "").trim(); };
+
+  const sheet_url = val("sheet_url",0);
+  const tab_name  = val("tab_name_in_sheet",1);
+  const status    = val("status",4);
+  const notes     = val("notes",5);
+  const c = classify(sheet_url);
+
+  set(g,2, pill(c.cls, c.label));
+
+  const sl = status.toLowerCase();
+  set(g,3, pill(sl==="live"?"ok":(sl==="stale"?"warn":"idle"), status||"—"));
+  set(g,4, el("span","mono", tab_name||"—"));
+
+  let colsTxt = notes;
+  const m = notes.match(/columns?\s*:\s*(.+)$/i);
+  if(m) colsTxt = m[1].replace(/\.$/,"");
+  set(g,5, el("div","cols", colsTxt||"—"));
+
+  if(c.kind === "published" || c.kind === "shared"){
+    const a = el("a", null, c.kind==="published" ? "published ↗" : "open ↗");
+    a.href = sheet_url; a.target="_blank"; a.rel="noopener"; a.title=sheet_url;
+    set(g,6, a);
+  }else{
+    set(g,6, el("span","muted", c.kind==="placeholder" ? "to fill" : "—"));
+  }
+  return { g, ok:true, kind:c.kind, live: sl==="live" };
+}
+
+/* ---- Config ------------------------------------------------------------- */
+async function readConfig(){
+  const box = $("configKV"); box.innerHTML="";
+  try{
+    const grid = fullGrid(await gvizJsonp("Config"));
+    const rows = grid.filter(r => r[0] != null && String(r[0]).trim() !== "");
+    if(!rows.length){ box.innerHTML="<div class='muted'>Config tab is empty.</div>"; return false; }
+    rows.forEach(r=>{
+      box.appendChild(el("div","k", String(r[0]).trim()));
+      box.appendChild(el("div","v", (r[1]!=null?String(r[1]):"").trim() || "—"));
+    });
+    return true;
+  }catch(e){
+    box.innerHTML = "<div class='err'>Couldn't read Config — "+e.message+"</div>";
+    return false;
+  }
+}
+
+/* ---- run all ------------------------------------------------------------ */
+async function run(){
+  $("run").disabled = true;
+  buildRows();
+  $("s_conf").textContent="…"; $("s_real").textContent="0";
+  $("s_place").textContent="0"; $("s_pub").textContent="0";
+
+  const confOk = await readConfig();
+  $("s_conf").textContent = confOk ? "yes" : "no";
+
+  let real=0, place=0, pub=0, fails=0;
+  for(const g of GRAINS){
+    const r = await readGrain(g);
+    if(!r.ok){ fails++; continue; }
+    if(r.kind==="published" || r.kind==="shared") real++;
+    if(r.kind==="placeholder" || r.kind==="empty") place++;
+    if(r.kind==="published") pub++;
+    $("s_real").textContent = real + "/" + GRAINS.length;
+    $("s_place").textContent = place;
+    $("s_pub").textContent = pub;
+  }
+
+  const v = $("verdict");
+  if(confOk && fails === 0){
+    v.innerHTML = "<span class='pill ok'>CONNECTED</span> &nbsp;The dashboard reads your live template. " +
+      "<b>"+real+"</b> of "+GRAINS.length+" grains have a real source link ("+pub+" published to web); " +
+      "<b>"+place+"</b> are still template placeholders to fill later. " +
+      "Pulling the actual source rows is Step 2 (the Netlify reader).";
+  }else if(!confOk){
+    v.innerHTML = "<span class='pill bad'>NOT CONNECTED</span> &nbsp;Couldn't read Config — the template may not be shared 'Anyone with the link'.";
+  }else{
+    v.innerHTML = "<span class='pill warn'>PARTIAL</span> &nbsp;"+fails+" grain rows failed to read. See the rows below.";
+  }
+  $("run").disabled = false;
+}
+
+$("run").addEventListener("click", run);
+run();
+</script>
+</body>
+</html>

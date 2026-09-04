@@ -1,0 +1,960 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Instamart WBR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#F4F7F6; --surface:#FFFFFF; --surface-2:#EDF2F0; --surface-3:#E3EBE8;
+  --ink:#101E1A; --ink-2:#41544E; --ink-3:#7A8C87;
+  --rule:#DDE5E2; --rule-strong:#C6D2CE;
+  --accent:#0E5F51; --accent-soft:#DCEBE6;
+  --good:#146F4C; --good-soft:#DBF0E4;
+  --warn:#8F5B06; --warn-soft:#F7E9CE;
+  --bad:#9E3428;  --bad-soft:#F7E0DC;
+  --shadow:0 1px 2px rgba(16,30,26,.05),0 8px 24px -16px rgba(16,30,26,.25);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;text-wrap:balance}
+table{border-collapse:collapse;width:100%}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+
+/* masthead */
+.masthead{position:sticky;top:0;z-index:40;background:var(--surface);border-bottom:1px solid var(--rule)}
+.masthead-inner{max-width:1420px;margin:0 auto;padding:14px 28px 14px;
+  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.wordmark{display:flex;align-items:baseline;gap:12px}
+.wordmark h1{font-family:"Newsreader",Georgia,serif;font-size:26px;font-weight:500;letter-spacing:-.01em}
+.wordmark .sub{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.mast-meta{display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap}
+.meta-item{display:flex;flex-direction:column;gap:2px}
+.meta-item .k{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.meta-item .v{font-family:"IBM Plex Mono",monospace;font-size:13.5px;font-weight:500;font-variant-numeric:tabular-nums}
+.meta-item .v small{color:var(--ink-3);font-size:11px}
+.range{display:flex;align-items:center;gap:5px}
+.dinp{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink);background:var(--surface-2);
+  border:1px solid var(--rule-strong);border-radius:4px;padding:3px 6px;cursor:pointer}
+.dinp:hover,.dinp:focus{border-color:var(--accent)}
+.rdash{color:var(--ink-3)}
+.presets{display:flex;gap:4px;flex-wrap:wrap}
+.pchip{font-size:11px;padding:3px 8px;border-radius:999px;border:1px solid var(--rule);
+  background:var(--surface);color:var(--ink-2);font-family:"IBM Plex Sans",sans-serif}
+.pchip:hover{border-color:var(--rule-strong);color:var(--ink)}
+.pchip.on{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:600}
+.tag-ok{font-family:"IBM Plex Sans",sans-serif;font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--good);background:var(--good-soft);border-radius:3px;padding:2px 6px;font-weight:600}
+.tag-btn{font-family:"IBM Plex Sans",sans-serif;font-size:10.5px;color:var(--accent);background:var(--accent-soft);
+  border:1px solid var(--rule);border-radius:3px;padding:2px 7px;white-space:nowrap}
+.tag-btn:hover{border-color:var(--accent)}
+
+/* month clock */
+.clock-wrap{display:flex;flex-direction:column;gap:5px;min-width:210px}
+.clock-bar{position:relative;height:8px;background:var(--surface-3);border-radius:4px;overflow:hidden}
+.clock-bar .fill{position:absolute;inset:0 auto 0 0;background:var(--accent);opacity:.85}
+.clock-bar .tick{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink-2)}
+.clock-legend{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;
+  font-size:10.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+
+/* shell */
+.shell{max-width:1420px;margin:0 auto;padding:24px 28px 90px;display:grid;grid-template-columns:210px minmax(0,1fr);gap:32px}
+@media (max-width:1040px){.shell{grid-template-columns:1fr;gap:18px}}
+.rail{position:sticky;top:104px;align-self:start;max-height:calc(100vh - 132px);overflow-y:auto}
+@media (max-width:1040px){.rail{position:static;max-height:none}}
+.rail h2{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:10px}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.rail a{display:block;padding:7px 8px 7px 12px;text-decoration:none;color:var(--ink-2);
+  border-left:2px solid var(--rule);font-size:13px;line-height:1.35}
+.rail a:hover{color:var(--ink);border-left-color:var(--rule-strong);background:var(--surface-2)}
+.rail a.on{color:var(--ink);border-left-color:var(--accent);font-weight:600}
+.rail li.sub a{padding-left:26px;font-size:12px;color:var(--ink-3);border-left-color:var(--rule)}
+.rail li.sub a:hover{color:var(--ink-2)}
+.rail li.todo span{display:block;padding:7px 8px 7px 12px;border-left:2px dashed var(--rule);
+  font-size:13px;color:var(--ink-3);font-style:italic}
+.rail-foot{margin-top:14px;padding:10px 12px;border-left:2px solid var(--rule-strong);font-size:11.5px;color:var(--ink-3)}
+
+/* notice */
+.notice{display:flex;gap:10px;background:var(--accent-soft);border:1px solid var(--rule);
+  border-radius:4px;padding:11px 14px;margin-bottom:20px;font-size:13px;color:var(--ink-2)}
+.notice b{color:var(--ink)}
+
+/* block */
+.block{background:var(--surface);border:1px solid var(--rule);border-radius:5px;margin-bottom:18px;
+  box-shadow:var(--shadow);scroll-margin-top:110px;overflow:hidden}
+.block-head{display:flex;align-items:baseline;justify-content:space-between;gap:18px;
+  padding:16px 20px 14px;border-bottom:1px solid var(--rule);flex-wrap:wrap}
+.block-title{display:flex;flex-direction:column;gap:3px}
+.block-title h3{font-family:"Newsreader",Georgia,serif;font-size:21px;font-weight:600;letter-spacing:-.01em}
+.block-title .q{color:var(--ink-3);font-style:italic;font-family:"Newsreader",Georgia,serif;font-size:14.5px}
+.timebox{display:flex;align-items:center;gap:8px;flex-shrink:0;font-family:"IBM Plex Mono",monospace;
+  font-size:11.5px;color:var(--ink-3)}
+.timebox .mins{background:var(--surface-2);border:1px solid var(--rule);border-radius:999px;
+  padding:2px 9px;color:var(--ink-2);font-weight:600}
+
+/* sub-block */
+.sub-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  padding:13px 20px 11px;background:var(--surface-2);border-bottom:1px solid var(--rule)}
+.sub-head .t{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--ink-2)}
+.sub-head .d{font-size:12.5px;color:var(--ink-3);flex:1 1 260px;min-width:0;text-align:right}
+.block > .sub-head:not(:first-of-type){border-top:1px solid var(--rule-strong)}
+
+/* tables */
+.tbl-wrap{overflow-x:auto}
+table.m{font-variant-numeric:tabular-nums;min-width:900px}
+.m thead th{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
+  font-weight:600;text-align:right;padding:9px 13px 8px;border-bottom:1px solid var(--rule);
+  background:var(--surface);white-space:nowrap;vertical-align:bottom}
+.m thead th:first-child{text-align:left;padding-left:20px}
+.m thead th.c{text-align:center}
+.m thead tr.grp th{padding:8px 13px 3px;border-bottom:none;font-size:9px;letter-spacing:.13em;color:var(--ink-3)}
+.m thead tr.grp th.gp{color:var(--accent);border-bottom:2px solid var(--accent-soft)}
+.m thead tr.grp th.gf{border-bottom:2px solid var(--rule)}
+.m tbody td{padding:9px 13px;border-bottom:1px solid var(--rule);text-align:right;
+  font-family:"IBM Plex Mono",monospace;font-size:13px;white-space:nowrap}
+.m tbody tr:last-child td{border-bottom:none}
+.m tbody tr:hover td{background:var(--surface-2)}
+.m td.name{text-align:left;font-family:"IBM Plex Sans",sans-serif;font-size:13.5px;color:var(--ink);
+  padding-left:20px;white-space:normal;min-width:180px}
+.m td.name .hint{display:block;font-size:11.5px;color:var(--ink-3);margin-top:1px}
+.m td.c{text-align:center}
+.m td.v{font-weight:600;font-size:13.5px}
+.m td.flat{color:var(--ink-3);font-size:12px}
+.m th.flat,.m td.flat{background:var(--surface-2)}
+.m tr.total td{border-top:1px solid var(--rule-strong);background:var(--surface-2);font-weight:600}
+.m tr.indent td.name{padding-left:36px;color:var(--ink-2)}
+.m tr.indent td.name::before{content:"└";position:absolute;margin-left:-16px;color:var(--ink-3)}
+.m td.name{position:relative}
+
+/* chips */
+.chip{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;
+  padding:2px 7px;border-radius:3px;letter-spacing:-.01em}
+.chip.up{background:var(--good-soft);color:var(--good)}
+.chip.down{background:var(--bad-soft);color:var(--bad)}
+.chip.flatc{background:var(--surface-3);color:var(--ink-3)}
+.chip.hold{background:var(--warn-soft);color:var(--warn)}
+.chip.plain{background:var(--surface-3);color:var(--ink-2);font-family:"IBM Plex Sans",sans-serif;font-weight:500}
+.chip.sm{font-size:10.5px;padding:1px 5px}
+
+/* toggle */
+.toggle{display:inline-flex;background:var(--surface-3);border-radius:5px;padding:2px;gap:2px}
+.toggle button{padding:5px 12px;border-radius:4px;font-size:12.5px;font-weight:500;color:var(--ink-2);white-space:nowrap}
+.toggle button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+/* tile board */
+.tiles{display:grid;grid-template-columns:repeat(4,1fr)}
+@media (max-width:1180px){.tiles{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:620px){.tiles{grid-template-columns:1fr}}
+.tile{padding:11px 15px 10px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.tile:nth-child(4n){border-right:none}
+.tiles .tile:nth-last-child(-n+4){border-bottom:none}
+@media (max-width:1180px){
+  .tile:nth-child(4n){border-right:1px solid var(--rule)}
+  .tile:nth-child(2n){border-right:none}
+  .tiles .tile:nth-last-child(-n+4):not(:nth-last-child(-n+2)){border-bottom:1px solid var(--rule)}
+}
+.tile .k{font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.tile .v{font-family:"IBM Plex Mono",monospace;font-size:20px;font-weight:600;letter-spacing:-.02em;
+  margin:2px 0 0;font-variant-numeric:tabular-nums;line-height:1.25}
+.tile .deltas{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.tile .deltas .chip{font-size:10.5px;padding:1px 5px}
+.tile .tfoot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px;flex-wrap:nowrap}
+.tile .tfoot .chip{font-size:10.5px;padding:1px 5px;background:none;color:var(--ink-3)}
+.tile .prow{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:8px;padding-top:7px;
+  border-top:1px dashed var(--rule)}
+.tile .prow .pd{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.tile .prow b{font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.tile .prow .chip{font-size:10px;padding:1px 5px}
+.tile .tfoot .chip{white-space:nowrap}
+.tile .tfoot svg{flex:0 0 auto}
+
+/* ---------- OSA grid ---------- */
+.tiles.t4 .tile:nth-child(4n){border-right:none}
+.tile .v.red{color:var(--bad)} .tile .v.amber{color:var(--warn)}
+.osa{min-width:1240px}
+.osa thead th.ch{text-align:center;min-width:98px}
+.osa td.sku{text-align:left;font-family:"IBM Plex Sans",sans-serif;font-size:12.5px;padding-left:20px;
+  white-space:normal;min-width:226px;position:sticky;left:0;background:var(--surface);z-index:2;
+  border-right:1px solid var(--rule)}
+.osa tbody tr:hover td.sku{background:var(--surface-2)}
+.osa td.sku .hint{display:block;font-size:10.5px;color:var(--ink-3);margin-top:1px}
+.osa td.bm,.osa td.cv{font-size:12px;color:var(--ink-2)}
+.osa td.cv.thin{color:var(--bad);font-weight:600}
+.osa td.ai{font-weight:600;border-right:1px solid var(--rule-strong)}
+.osa td.oc{text-align:center;padding:6px 8px;border-left:1px solid var(--rule);cursor:pointer}
+.osa td.oc:hover{outline:2px solid var(--accent);outline-offset:-2px}
+.osa td.oc.na{color:var(--ink-3);cursor:default}
+.osa td.oc.na:hover{outline:none}
+.osa .ocv{display:flex;align-items:center;justify-content:center;gap:5px;font-size:13px}
+.osa .ocv b{font-weight:600}
+.osa .ocl{font-size:10px;color:var(--ink-3);margin-top:2px;letter-spacing:-.02em;
+  display:flex;align-items:center;justify-content:center;gap:5px}
+.osa .ocl i{font-style:normal}
+.osa .ocl i.u{color:var(--good)} .osa .ocl i.dn{color:var(--bad)}
+/* days-of-cover bands — failure at both ends, healthy in the middle */
+.osa td.oc.b-ok{background:var(--good-soft)}
+.osa td.oc.b-lo,.osa td.oc.b-hi{background:var(--warn-soft)}
+.osa td.oc.b-lo b,.osa td.oc.b-hi b,.osa td.oc.b-lo .ar,.osa td.oc.b-hi .ar{color:var(--warn)}
+.osa td.oc.b-crit-lo,.osa td.oc.b-crit-hi{background:var(--bad-soft)}
+.osa td.oc.b-crit-lo b,.osa td.oc.b-crit-hi b,.osa td.oc.b-crit-lo .ar,.osa td.oc.b-crit-hi .ar{color:var(--bad)}
+.osa .ocv .ar{font-size:10px;line-height:1}
+.osa .ocv .un{font-size:9.5px;color:var(--ink-3);margin-left:-2px}
+.legend .sw.bnd{border:1px solid var(--rule)}
+.legend .sw.b-ok{background:var(--good-soft)}
+.legend .sw.b-lo,.legend .sw.b-hi{background:var(--warn-soft)}
+.legend .sw.b-crit-lo,.legend .sw.b-crit-hi{background:var(--bad-soft)}
+.osa td.oc.s-ok{background:var(--good-soft)}
+.osa td.oc.s-low{background:var(--bad-soft)}
+.osa td.oc.s-planned{background:var(--surface-2);opacity:.55}
+.osa td.oc.s-stale{background:repeating-linear-gradient(45deg,var(--surface-2),var(--surface-2) 4px,var(--surface) 4px,var(--surface) 8px)}
+.osa tr.band td{background:var(--surface-3);font-family:"IBM Plex Sans",sans-serif;font-weight:700;
+  font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);text-align:left;
+  padding:7px 20px;position:sticky;left:0}
+.osa tr.band td .bc{font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink-3);margin-left:9px;font-size:11px}
+.osa td.empty{text-align:center;color:var(--ink-3);padding:26px;font-family:"IBM Plex Sans",sans-serif}
+.wb{display:inline-flex;align-items:flex-end;gap:1.5px;height:11px}
+.wb i{width:4px;display:block;border-radius:1px}
+.wb i.hi{background:var(--good)} .wb i.lo{background:var(--bad)}
+.ocl .mn{color:var(--ink-3)}
+.d{width:8px;height:8px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.d-ok{background:var(--good)} .d-bad{background:var(--bad)}
+.d-planned{background:none;border:1.5px solid var(--ink-3);width:7px;height:7px}
+.d-stale{background:var(--ink-3);opacity:.5}
+.warn{display:inline-grid;place-items:center;width:13px;height:13px;border-radius:3px;
+  background:var(--warn);color:var(--surface);font-size:9.5px;font-weight:700;line-height:1;flex:0 0 auto}
+.legend{display:flex;gap:15px;flex-wrap:wrap;padding:11px 20px;border-top:1px solid var(--rule);
+  background:var(--surface-2);font-size:11.5px;color:var(--ink-3);align-items:center}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend .sw{width:13px;height:13px;border-radius:2px;display:inline-block}
+
+/* filters */
+.filters{display:flex;flex-direction:column;gap:8px;padding:12px 20px;background:var(--surface-2);
+  border-bottom:1px solid var(--rule);border-top:1px solid var(--rule-strong)}
+.fset{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.fset .fl{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  font-weight:600;width:74px;flex:0 0 auto}
+.fc{padding:3px 10px;border-radius:999px;font-size:12px;color:var(--ink-2);
+  border:1px solid var(--rule);background:var(--surface)}
+.fc:hover{border-color:var(--rule-strong);color:var(--ink)}
+.fc.on{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:600}
+
+.mchart{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(88px,1fr);gap:8px;
+  padding:12px 20px 6px;overflow-x:auto}
+.mcol{display:flex;flex-direction:column;align-items:stretch;gap:4px}
+.mwrap{position:relative;height:54px;display:flex;align-items:flex-end;border-bottom:1px solid var(--rule-strong)}
+.mbar{width:100%;border-radius:2px 2px 0 0;min-height:2px}
+.mbar.ref{background:var(--surface-3);border:1px solid var(--rule-strong)}
+.mbar.hit{background:var(--good)}
+.mbar.miss{background:var(--bad);opacity:.85}
+.mbar.plan{background:repeating-linear-gradient(45deg,var(--accent-soft),var(--accent-soft) 4px,transparent 4px,transparent 8px);
+  border:1px dashed var(--accent)}
+.mtick{position:absolute;left:-2px;right:-2px;height:0;border-top:2px dashed var(--ink)}
+.mval{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums;
+  text-align:center;letter-spacing:-.02em}
+.mfoot{display:flex;align-items:center;justify-content:center;gap:5px}
+.mlab{font-size:9.5px;color:var(--ink-3);letter-spacing:.04em;white-space:nowrap}
+.mfoot .na{font-size:9.5px;color:var(--ink-3)}
+.mlegend{display:flex;gap:13px;flex-wrap:wrap;padding:2px 20px 11px;font-size:10.5px;color:var(--ink-3);align-items:center}
+.mlegend span{display:flex;align-items:center;gap:5px}
+.mlegend i.k{width:10px;height:10px;border-radius:2px;display:inline-block}
+.mlegend i.k.ref{background:var(--surface-3);border:1px solid var(--rule-strong)}
+.mlegend i.k.miss{background:var(--bad);opacity:.85}
+.mlegend i.k.plan{border:1px dashed var(--accent);background:var(--accent-soft)}
+.mlegend i.k.tick{height:0;border-top:2px dashed var(--ink);border-radius:0}
+.hist td.now,.hist th.now{background:var(--accent-soft)}
+.hist td.planc,.hist th.planc{background:var(--surface-2);color:var(--ink-3)}
+.hist td.planc .chip{opacity:.85}
+.m th.tr,.m td.tr{background:var(--surface-2);color:var(--ink-3);font-size:12px}
+.m thead tr.grp th.gf.tr{color:var(--ink-3)}
+.hist td .na{color:var(--ink-3)}
+
+/* ---------- pace strip ---------- */
+.pace{display:grid;grid-template-columns:1fr 1fr 1.5fr 1fr 1.3fr;border-bottom:1px solid var(--rule)}
+@media (max-width:1100px){.pace{grid-template-columns:1fr 1fr;}}
+.pcel{padding:13px 18px 14px;border-right:1px solid var(--rule)}
+.pcel:last-child{border-right:none}
+.pcel .k{font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.pcel .v{font-family:"IBM Plex Mono",monospace;font-size:23px;font-weight:600;letter-spacing:-.02em;margin:3px 0 2px}
+.pcel .v.g{color:var(--good)} .pcel .v.a{color:var(--warn)} .pcel .v.r{color:var(--bad)}
+.pcel .s{font-size:11.5px;color:var(--ink-2);font-family:"IBM Plex Mono",monospace}
+.pcel .s2{font-size:11px;color:var(--ink-3);margin-top:3px;line-height:1.4}
+.pcel.verdict .chip{margin:6px 0 2px;font-size:12px;padding:4px 9px}
+.wpwrap{display:flex;gap:10px;align-items:flex-end;margin:6px 0 2px}
+.wpb{flex:1;text-align:center}
+.wpbar{position:relative;height:40px;background:var(--surface-2);border-radius:2px;
+  display:flex;align-items:flex-end;overflow:visible}
+.wpfill{width:100%;border-radius:2px}
+.wpfill.ok{background:var(--good)} .wpfill.warn{background:var(--warn)} .wpfill.bad{background:var(--bad)}
+.wp100{position:absolute;left:-2px;right:-2px;height:0;border-top:1px dashed var(--ink-3)}
+.wpv{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;margin-top:3px}
+.wpl{font-size:9px;color:var(--ink-3);letter-spacing:.05em}
+
+/* ---------- read this first ---------- */
+.finds{display:flex;flex-direction:column}
+.find{display:grid;grid-template-columns:82px minmax(0,1fr) 150px;gap:14px;align-items:start;
+  padding:13px 20px;border-bottom:1px solid var(--rule);text-decoration:none;color:inherit}
+.find:hover{background:var(--surface-2)}
+.find:last-of-type{border-bottom:none}
+.fstate{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;
+  padding:3px 7px;border-radius:3px;text-align:center;margin-top:1px}
+.st-new{background:var(--bad-soft);color:var(--bad)}
+.st-worse{background:var(--bad-soft);color:var(--bad)}
+.st-better{background:var(--good-soft);color:var(--good)}
+.st-res{background:var(--good-soft);color:var(--good)}
+.st-un{background:var(--surface-3);color:var(--ink-3)}
+.ftitle{font-size:14px;font-weight:600;color:var(--ink);line-height:1.35}
+.fdet{font-size:12.5px;color:var(--ink-2);line-height:1.5;margin-top:3px}
+.fimp{text-align:right}
+.fimp .k{display:block;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.fimp b{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;display:block;margin-top:1px}
+.ftag{display:inline-block;margin-top:5px;font-size:9px;letter-spacing:.1em;font-weight:700;
+  color:var(--ink-3);border:1px solid var(--rule);border-radius:3px;padding:1px 5px}
+.linkbtn{font-family:"IBM Plex Sans",sans-serif;font-size:12.5px;color:var(--accent);
+  border-bottom:1px dashed var(--accent);padding:0}
+.linkbtn:hover{color:var(--ink)}
+.linkbtn.wide{display:block;width:100%;text-align:center;padding:11px;border-bottom:none;
+  background:var(--surface-2);border-top:1px solid var(--rule)}
+
+/* ---------- weekly series ---------- */
+.wchart{padding:16px 20px 4px}
+.wcols{position:relative;display:flex;gap:6px;align-items:flex-end}
+.wcol{flex:1;text-align:center;position:relative}
+.wcol.mstart::before{content:'';position:absolute;left:-4px;top:0;bottom:26px;
+  border-left:1px dashed var(--rule-strong)}
+.wbarwrap{position:relative;display:flex;align-items:flex-end;background:var(--surface-2);border-radius:2px}
+.wbar{width:100%;border-radius:2px}
+.wbar.ok{background:var(--good)} .wbar.warn{background:var(--warn)} .wbar.bad{background:var(--bad)}
+.wplan{position:absolute;left:-2px;right:-2px;height:0;border-top:2px dotted var(--ink-2)}
+.wv{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:600;margin-top:4px;
+  font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.we{font-size:9.5px;color:var(--ink-3);margin-top:1px;white-space:nowrap}
+.wm{font-size:9px;color:var(--ink-2);font-weight:700;letter-spacing:.08em;height:12px}
+.wma{position:absolute;left:0;right:0;top:0;height:118px;pointer-events:none}
+.wnote{padding:4px 20px 14px;font-size:12px;color:var(--ink-3);max-width:92ch}
+
+/* ---------- variance bridge ---------- */
+.bridge{padding:0}
+.bhead{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:14px 20px;
+  background:var(--surface-2);border-bottom:1px solid var(--rule)}
+.bh span{display:block;font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.bh b{font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600}
+.bh.tot b{font-size:19px}
+.bh.tot.p b{color:var(--good)} .bh.tot.n b{color:var(--bad)}
+.bh em{font-style:normal;font-size:12px;color:var(--ink-3)}
+.barrow{color:var(--ink-3);font-size:16px}
+.blist{padding:6px 20px 10px}
+.brow{display:grid;grid-template-columns:190px minmax(0,1fr) 92px 46px;gap:12px;align-items:center;
+  padding:5px 0;font-family:"IBM Plex Mono",monospace;font-size:12.5px}
+.brow.tail{opacity:.6;border-top:1px dashed var(--rule);margin-top:4px;padding-top:8px}
+.bname{font-family:"IBM Plex Sans",sans-serif;font-size:12.5px;color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bwrap{position:relative;height:16px}
+.bzero{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--rule-strong)}
+.bbar{position:absolute;top:2px;bottom:2px;border-radius:2px}
+.bbar.pos{background:var(--good)} .bbar.neg{background:var(--bad)}
+.bval{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.bval.p{color:var(--good)} .bval.n{color:var(--bad)}
+.bpct{text-align:right;color:var(--ink-3);font-size:11px}
+.bnote{padding:0 20px 14px;font-size:12px;color:var(--ink-3);max-width:80ch}
+.rev td.p{color:var(--good);font-weight:600}
+.rev td.n{color:var(--bad);font-weight:600}
+.rev td.sku{text-align:left;font-family:"IBM Plex Sans",sans-serif;font-size:12.5px;padding-left:20px;
+  white-space:normal;min-width:230px;position:sticky;left:0;background:var(--surface);z-index:2;
+  border-right:1px solid var(--rule)}
+.rev td.sku.sub{padding-left:38px;color:var(--ink-2);font-size:12px}
+.rev tbody tr:hover td.sku{background:var(--surface-2)}
+.rev td.sku .hint{display:block;font-size:10.5px;color:var(--ink-3);margin-top:1px}
+.rev td .na{color:var(--ink-3)}
+.rev tr.moreRow td{background:var(--surface-2);padding:10px 20px}
+
+
+/* ---------- marketing: targeting mix ---------- */
+.mixwrap{padding:12px 20px 6px;display:flex;flex-direction:column;gap:7px}
+.mixrow{display:grid;grid-template-columns:132px minmax(60px,1fr) 74px 40px 92px;
+  gap:12px;align-items:center;font-family:"IBM Plex Mono",monospace;font-size:12.5px}
+.mixn{font-family:"IBM Plex Sans",sans-serif;font-size:12.5px;color:var(--ink)}
+.mixbar{height:14px;background:var(--surface-2);border-radius:2px;overflow:hidden}
+.mixbar i{display:block;height:100%;background:var(--accent);opacity:.85;border-radius:2px}
+.mixv{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.mixp{text-align:right;color:var(--ink-3);font-size:11px}
+.mixa{text-align:right}
+@media (max-width:760px){.mixrow{grid-template-columns:110px 1fr 66px}
+  .mixp,.mixa{display:none}}
+
+/* ---------- lens switch ---------- */
+.lensbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 20px;
+  background:var(--surface);border-bottom:1px solid var(--rule)}
+.lensbar .lnote{font-size:11.5px;color:var(--ink-3);flex:1 1 320px;min-width:0;text-align:right;line-height:1.4}
+.sub-head.sh2{padding:9px 20px 8px;background:var(--surface-2)}
+.sub-head.sh2 .t{font-size:10px;color:var(--ink-3)}
+/* week cells carry a value and a small verdict, stacked */
+.rev td.wkc{text-align:right;padding:8px 13px;line-height:1.25}
+.rev td.wkc.run{background:var(--accent-soft)}
+.rev th.now{color:var(--accent)}
+.wchip{display:block;font-size:10px;font-weight:600;margin-top:2px;letter-spacing:-.01em}
+.wchip.up{color:var(--good)} .wchip.down{color:var(--bad)} .wchip.hold{color:var(--warn)}
+.m thead th .wsub{font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;
+  margin-top:3px;color:var(--ink-3);white-space:nowrap}
+.rev tr.moreRow .ms{margin-left:10px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-3)}
+
+/* ---------- selected-period strip ---------- */
+.pstrip{border-bottom:1px solid var(--rule)}
+.phead{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  padding:12px 20px 9px;background:var(--surface-2);border-bottom:1px solid var(--rule)}
+.phead .t{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--ink-2);
+  flex:0 0 auto;white-space:nowrap}
+.phead .d{font-size:12px;color:var(--ink-3);flex:1 1 340px;min-width:0;text-align:right}
+.pgrid{display:grid;grid-template-columns:repeat(4,1fr)}
+@media (max-width:1000px){.pgrid{grid-template-columns:repeat(2,1fr)}}
+.pcell{padding:12px 18px 13px;border-right:1px solid var(--rule)}
+.pcell:last-child{border-right:none}
+.pcell .k{font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.pcell .v{font-family:"IBM Plex Mono",monospace;font-size:21px;font-weight:600;letter-spacing:-.02em;
+  margin:3px 0 0;font-variant-numeric:tabular-nums}
+.pcell .deltas{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}
+.pcell .deltas .chip{font-size:10.5px;padding:1px 6px}
+
+/* ---------- JBP pacer ---------- */
+.pacer{padding:18px 20px 16px;border-bottom:1px solid var(--rule)}
+.pacer-top{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:11px}
+.pacer-top .pl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--ink-2)}
+.pacer-top .pr{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-3)}
+.track{position:relative;height:26px;background:var(--surface-3);border-radius:4px;overflow:visible}
+.track .fill{position:absolute;left:0;top:0;bottom:0;background:var(--accent);opacity:.9;border-radius:4px 0 0 4px}
+.track .mk{position:absolute;top:-5px;bottom:-5px;width:2px}
+.track .mk.ideal{background:var(--ink-2)}
+.track .mk.ideal::after{content:'';position:absolute;top:-5px;left:-3px;border:4px solid transparent;border-top-color:var(--ink-2)}
+.track .mk.le{background:var(--warn);width:3px}
+.track .mk.le::after{content:'';position:absolute;bottom:-5px;left:-3.5px;border:5px solid transparent;border-bottom-color:var(--warn)}
+.pacer-legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:14px;font-size:11.5px;color:var(--ink-3)}
+.pacer-legend .lg{display:flex;align-items:center;gap:6px}
+.pacer-legend b{font-family:"IBM Plex Mono",monospace;color:var(--ink);font-weight:600}
+.pacer-legend em{font-style:normal;color:var(--warn);font-family:"IBM Plex Mono",monospace}
+.pacer-legend .end{margin-left:auto}
+.pacer-legend i{width:11px;height:11px;border-radius:2px;display:inline-block}
+.pacer-legend i.k-fill{background:var(--accent)}
+.pacer-legend i.k-ideal{background:var(--ink-2)}
+.pacer-legend i.k-le{background:var(--warn)}
+.jbp td.sku{text-align:left;font-family:"IBM Plex Sans",sans-serif;font-size:12.5px;padding-left:20px;
+  white-space:normal;min-width:250px;position:sticky;left:0;background:var(--surface);z-index:2;
+  border-right:1px solid var(--rule)}
+.jbp tbody tr:hover td.sku{background:var(--surface-2)}
+.jbp tr.total td.sku{background:var(--surface-2)}
+.jbp td.neg{color:var(--bad);font-weight:600}
+.pa2s{display:block;font-size:9.5px;color:var(--ink-3);margin-top:2px}
+
+/* RCA stock strip — one straight line, a column per metric */
+.strip-wrap{overflow-x:auto;margin-top:4px}
+.strip{display:grid;grid-template-columns:repeat(7,minmax(84px,1fr));border:1px solid var(--rule);
+  border-radius:5px;overflow:hidden;min-width:600px}
+.strip .cel{padding:10px 8px 9px;text-align:center;border-right:1px solid var(--rule);background:var(--surface-2)}
+.strip .cel:last-child{border-right:none}
+.strip .cel .l{font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);
+  font-weight:600;white-space:nowrap}
+.strip .cel .n{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;margin-top:4px;
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.strip .cel .n.bad{color:var(--bad)}
+.strip .cel .n small{font-size:9.5px;color:var(--ink-3);font-weight:400;margin-left:1px}
+
+/* RCA panel */
+.rca-back{position:fixed;inset:0;background:rgba(16,30,26,.34);z-index:60}
+.rca{position:fixed;top:0;right:0;bottom:0;width:min(690px,96vw);background:var(--surface);
+  border-left:1px solid var(--rule-strong);z-index:61;display:flex;flex-direction:column;
+  box-shadow:-14px 0 40px -20px rgba(0,0,0,.5)}
+.rca-h{display:flex;justify-content:space-between;gap:12px;padding:16px 18px 13px;border-bottom:1px solid var(--rule)}
+.rca-t{font-family:"Newsreader",Georgia,serif;font-size:18px;font-weight:600;line-height:1.25}
+.rca-s{font-size:11.5px;color:var(--ink-3);margin-top:3px}
+.rca-x{font-size:22px;line-height:1;color:var(--ink-3);padding:0 4px;height:fit-content}
+.rca-x:hover{color:var(--ink)}
+.rca-b{overflow-y:auto;padding:0 18px 26px}
+.rca-chips{display:flex;gap:6px;flex-wrap:wrap;padding:13px 0 4px}
+.rca-sec{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);
+  font-weight:600;margin:16px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--rule)}
+.kv{display:flex;justify-content:space-between;gap:14px;padding:5px 0;font-size:12.5px;color:var(--ink-2)}
+.kv b{font-family:"IBM Plex Mono",monospace;color:var(--ink);font-weight:600;text-align:right;
+  font-variant-numeric:tabular-nums}
+.kv b.bad{color:var(--bad)}
+.note{font-size:12px;color:var(--ink-3);line-height:1.45;background:var(--surface-2);
+  border-radius:4px;padding:9px 11px;margin-top:8px}
+.note.bad{background:var(--bad-soft);color:var(--bad)}
+.wk4{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:8px 0 4px}
+.w4{background:var(--good-soft);border-radius:4px;padding:6px 4px;text-align:center}
+.w4.lo{background:var(--bad-soft)}
+.w4 span{display:block;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.w4 b{font-family:"IBM Plex Mono",monospace;font-size:12.5px}
+.reg td.txt{text-align:left;font-family:"IBM Plex Sans",sans-serif;font-size:12.5px;white-space:normal}
+.reg td.cty{text-align:left;font-size:12.5px;white-space:nowrap}
+.reg td.name{min-width:210px;font-size:12.5px}
+.reg thead th{text-align:left}
+.reg thead th:first-child{padding-left:20px}
+
+/* decomposition */
+.decomp{padding:18px 20px 20px;display:flex;flex-direction:column;gap:16px}
+.decomp-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.decomp-eq{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+.dnode{background:var(--surface-2);border:1px solid var(--rule);border-radius:4px;padding:10px 14px;min-width:132px}
+.dnode.head{background:var(--accent-soft);border-color:var(--accent)}
+.dnode .k{font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.dnode .v{font-family:"IBM Plex Mono",monospace;font-size:20px;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums}
+.dnode .s{font-size:11px;color:var(--ink-3);font-family:"IBM Plex Mono",monospace;margin-top:1px}
+.dop{display:grid;place-items:center;font-family:"IBM Plex Mono",monospace;font-size:17px;color:var(--ink-3);padding:0 2px}
+.dnote{font-size:12.5px;color:var(--ink-3);max-width:74ch}
+
+/* callouts */
+.callouts{padding:14px 20px 16px;border-top:1px solid var(--rule);background:var(--surface-2);
+  display:flex;flex-direction:column;gap:8px}
+.callouts .lbl{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.callouts ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.callouts li{display:grid;grid-template-columns:auto 1fr;gap:10px;font-size:13px;color:var(--ink-2);line-height:1.45}
+.callouts li .tag{font-size:10.5px;padding:1px 6px;height:fit-content;margin-top:1px;white-space:nowrap}
+
+.foot{max-width:1420px;margin:0 auto;padding:0 28px 60px;font-size:12px;color:var(--ink-3);
+  display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+.foot .sw{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px}
+.spark{display:block;margin:0 auto}
+</style>
+<style>
+/* ---- additions layered on top of the reference design system ---- */
+.im .wordmark h1{color:var(--accent)}
+.src-strip{display:flex;flex-wrap:wrap;gap:8px;padding:14px 20px}
+.srcc{display:flex;flex-direction:column;gap:3px;border:1px solid var(--rule);border-radius:5px;
+  padding:7px 11px;min-width:132px;background:var(--surface-2)}
+.srcc .n{font-size:11.5px;font-weight:600;color:var(--ink)}
+.srcc .st{font-size:10px;letter-spacing:.04em;font-family:"IBM Plex Mono",monospace}
+.srcc.ok{border-color:#bfe0cf;background:var(--good-soft)} .srcc.ok .st{color:var(--good)}
+.srcc.run .st{color:var(--accent)}
+.srcc.ph .st{color:var(--ink-3)}
+.srcc.err{border-color:#ecc7c2;background:var(--bad-soft)} .srcc.err .st{color:var(--bad)}
+.pending{padding:22px 20px;color:var(--ink-3);font-size:13px}
+.pending b{color:var(--ink-2)}
+.dgrid{display:grid;grid-template-columns:repeat(4,1fr)}
+@media (max-width:1180px){.dgrid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:620px){.dgrid{grid-template-columns:1fr}}
+.mono{font-family:"IBM Plex Mono",monospace}
+.subnote{font-size:11.5px;color:var(--ink-3);padding:2px 20px 12px}
+</style>
+</head>
+<body class="im">
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="wordmark">
+      <h1>Instamart</h1>
+      <span class="sub">Weekly Business Review</span>
+    </div>
+    <div class="mast-meta">
+      <div class="meta-item"><span class="k">As of</span><span class="v" id="mAsOf">—</span></div>
+      <div class="meta-item"><span class="k">Period</span><span class="v" id="mPeriod">—</span></div>
+      <div class="meta-item"><span class="k">Owner</span><span class="v" id="mOwner">—</span></div>
+      <div class="clock-wrap">
+        <div class="clock-legend"><span id="mClockTop">—</span></div>
+        <div class="clock-bar"><div class="fill" id="mFill"></div><div class="tick" id="mTick"></div></div>
+        <div class="clock-legend"><span id="mPh">month to date</span><span id="mFl">—</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="Sections">
+    <h2>Sections</h2>
+    <ol id="rail">
+      <li><a href="#s-src" class="on">Sources</a></li>
+      <li><a href="#s-osa">Availability</a></li>
+      <li><a href="#s-mkt">Marketing</a></li>
+      <li class="sub"><a href="#s-mkt">Share of voice</a></li>
+      <li class="todo"><span>P&amp;L — next</span></li>
+      <li class="todo"><span>Revenue — next</span></li>
+      <li class="todo"><span>JBP — next</span></li>
+    </ol>
+    <div class="rail-foot" id="railFoot">Live from the Google Sheet. Sections fill in as their source links are added to the template.</div>
+  </nav>
+
+  <main>
+    <div class="notice" id="notice">
+      <div><b>Live build.</b> Reading the template workbook and its linked sources directly in your browser. Sections with a real source link show live numbers; the rest say so.</div>
+    </div>
+    <div id="blocks"><div class="pending">Connecting to the source workbook…</div></div>
+  </main>
+</div>
+
+<div class="foot">
+  <span><i class="sw" style="background:var(--good)"></i>at or ahead of benchmark</span>
+  <span><i class="sw" style="background:var(--warn)"></i>within 5pt</span>
+  <span><i class="sw" style="background:var(--bad)"></i>more than 5pt below</span>
+  <span>₹L = lakh · pt = percentage points · OSA = on-shelf availability · SOV = share of voice</span>
+</div>
+
+<script>
+/* ============================================================================
+ * Instamart WBR — live dashboard (pure static, no backend)
+ * ----------------------------------------------------------------------------
+ * Control layer: the template workbook (shared "anyone with link") is read via
+ *   Google gviz JSONP (a <script> tag; bypasses CORS). It yields Config plus
+ *   each grain's source link (row 2: sheet_url, tab, status, notes).
+ * Data layer: each grain's source is a "Publish to web" sheet. We fetch its CSV
+ *   export directly (works from an https origin like Netlify). No API key.
+ * Nothing is invented — a grain with no real link says "not configured".
+ * ==========================================================================*/
+const TEMPLATE_ID = "1usOzp94Pxnn4Qv0TiYDDsBsa8QkQplswGHj46vTFTrk";
+const GRAINS = [
+  "Curve","PnL","Categories","SKUs","CategoryHistory","WeeklyTrend",
+  "Availability_Weekly","Availability_Stock","Availability_Bench",
+  "ActionRegister","JBP","JBP_History","Marketing",
+  "Keywords_WoW","Keywords_Monthly","Demand"
+];
+
+/* ---------- gviz JSONP (template) ---------- */
+function gvizJsonp(tab, range, raw){
+  return new Promise((resolve, reject)=>{
+    const cb = "__gv" + Math.random().toString(36).slice(2);
+    const s = document.createElement("script");
+    let done = false;
+    const timer = setTimeout(()=>{ if(!done){ fin(); reject(new Error("timed out")); } }, 25000);
+    function fin(){ done = true; clearTimeout(timer); delete window[cb]; s.remove(); }
+    window[cb] = (d)=>{ if(done) return; fin();
+      if(d && d.status === "error"){ const e=d.errors&&d.errors[0]; return reject(new Error((e&&(e.detailed_message||e.message))||"gviz error")); }
+      const t = d.table||{};
+      const cols = (t.cols||[]).map(c=>String((c&&c.label)||"").trim());
+      const rows = (t.rows||[]).map(r=>(r.c||[]).map(c=>c?(raw?c.v:(c.f!=null?c.f:c.v)):null));
+      resolve({cols, rows});
+    };
+    s.onerror = ()=>{ if(!done){ fin(); reject(new Error("script error")); } };
+    let u = "https://docs.google.com/spreadsheets/d/"+TEMPLATE_ID+"/gviz/tq?tqx=out:json;responseHandler:"+cb+"&sheet="+encodeURIComponent(tab);
+    if(range) u += "&range="+encodeURIComponent(range);
+    s.src = u; document.head.appendChild(s);
+  });
+}
+const fullGrid = ({cols, rows}) => cols.some(c=>c&&c.length) ? [cols].concat(rows) : rows;
+
+/* ---------- source CSV (published sheets) ---------- */
+function toCsvUrl(u){
+  u = String(u||"").trim();
+  if(u.indexOf("/pubhtml") >= 0) u = u.replace("/pubhtml","/pub");
+  if(u.indexOf("/pub") >= 0) return u + (/[?&]output=csv/.test(u) ? "" : (u.indexOf("?")>=0?"&":"?")+"output=csv");
+  const m = u.match(/\/d\/([a-zA-Z0-9-_]+)/);      // normal shared link -> gviz csv
+  if(m){ let g=u.match(/[#&?]gid=([0-9]+)/); return "https://docs.google.com/spreadsheets/d/"+m[1]+"/gviz/tq?tqx=out:csv"+(g?"&gid="+g[1]:""); }
+  return u;
+}
+function parseCSV(text){
+  const rows=[]; let i=0,n=text.length,f="",row=[],q=false;
+  while(i<n){ const c=text[i];
+    if(q){ if(c=='"'){ if(text[i+1]=='"'){f+='"';i+=2;continue;} q=false;i++;continue;} f+=c;i++;continue; }
+    if(c=='"'){q=true;i++;continue;}
+    if(c==','){row.push(f);f="";i++;continue;}
+    if(c=='\r'){i++;continue;}
+    if(c=='\n'){row.push(f);rows.push(row);row=[];f="";i++;continue;}
+    f+=c;i++;
+  }
+  if(f.length||row.length){row.push(f);rows.push(row);}
+  return rows;
+}
+async function fetchCsv(u){
+  const r = await fetch(toCsvUrl(u), {credentials:"omit"});
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  const t = await r.text();
+  if(/^\s*</.test(t)) throw new Error("got HTML, not CSV");
+  return parseCSV(t);
+}
+
+/* ---------- formatting ---------- */
+const numOf = v => { const x = parseFloat(String(v==null?"":v).replace(/[^0-9.\-]/g,"")); return isFinite(x)?x:null; };
+const L  = v => "₹"+(v/1e5).toFixed(1)+"L";
+const N  = v => Math.round(v).toLocaleString("en-IN");
+const P  = v => (v==null?"—":v.toFixed(1)+"%");
+const MO = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function colFinder(headers){
+  const H = headers.map(h=>String(h||"").trim());
+  const low = H.map(h=>h.toLowerCase());
+  return (...aliases)=>{
+    for(const a of aliases){ const i=H.indexOf(a); if(i>=0) return i; }
+    for(const a of aliases){ const i=low.indexOf(a.toLowerCase()); if(i>=0) return i; }
+    return -1;
+  };
+}
+function chip(v, unit, goodUp){
+  if(v==null) return "";
+  const good = goodUp===false ? v<0 : v>0;
+  const cls = Math.abs(v)<0.05 ? "flatc" : (good?"up":"down");
+  return '<span class="chip '+cls+'">'+(v>=0?"+":"")+v.toFixed(1)+(unit||"")+"</span>";
+}
+let _sid=0;
+function spark(series,W,H){
+  series=series.filter(v=>isFinite(v)); if(series.length<2) return "";
+  const w=W||74,h=H||21,p=2.5,mn=Math.min(...series),mx=Math.max(...series),rg=(mx-mn)||1;
+  const pts=series.map((v,i)=>[p+(i/(series.length-1))*(w-2*p),h-p-((v-mn)/rg)*(h-2*p)]);
+  const line=pts.map((q,i)=>(i?"L":"M")+q[0].toFixed(1)+" "+q[1].toFixed(1)).join(" ");
+  const area=line+" L"+pts[pts.length-1][0].toFixed(1)+" "+(h-p)+" L"+pts[0][0].toFixed(1)+" "+(h-p)+" Z";
+  const last=pts[pts.length-1],uid="k"+(++_sid);
+  return '<svg class="spark" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" aria-hidden="true"><defs><linearGradient id="'+uid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--accent)" stop-opacity=".2"/><stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs><path d="'+area+'" fill="url(#'+uid+')"/><path d="'+line+'" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="2.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="1.5"/></svg>';
+}
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- state ---------- */
+const STATE = { config:{}, grains:{} };
+GRAINS.forEach(g=> STATE.grains[g] = { key:g, status:"", url:"", tab:"", notes:"", kind:"", state:"idle", rows:null, headers:null, error:null });
+function classify(url){
+  const u=String(url||"").trim();
+  if(!u) return "empty";
+  if(/EXAMPLE_SHEET_ID/i.test(u)) return "placeholder";
+  if(u.indexOf("/d/e/")>=0 || u.indexOf("/pub")>=0) return "published";
+  if(u.indexOf("/spreadsheets/d/")>=0) return "shared";
+  return "other";
+}
+
+/* ---------- load ---------- */
+async function loadConfig(){
+  try{
+    const grid = fullGrid(await gvizJsonp("Config"));
+    const kv = {};
+    grid.forEach(r=>{ const k=String(r[0]||"").trim(); if(k) kv[k]=(r[1]!=null?String(r[1]).trim():""); });
+    STATE.config = kv;
+  }catch(e){ STATE.config = {}; STATE.configError = e.message; }
+}
+async function loadGrainLink(g){
+  const e = STATE.grains[g];
+  try{
+    const grid = fullGrid(await gvizJsonp(g, "A1:F2", true));
+    const H = (grid[0]||[]).map(x=>String(x||"").trim().toLowerCase());
+    const r = grid[1]||[];
+    const get=(name,pos)=>{ const k=H.indexOf(name); return String((k>=0?r[k]:r[pos]) ?? "").trim(); };
+    e.url=get("sheet_url",0); e.tab=get("tab_name_in_sheet",1); e.status=get("status",4); e.notes=get("notes",5);
+    e.kind=classify(e.url);
+  }catch(err){ e.kind="error"; e.error=err.message; }
+}
+async function loadGrainData(g){
+  const e = STATE.grains[g];
+  if(e.kind!=="published" && e.kind!=="shared") return;
+  e.state="loading"; render();
+  try{
+    const grid = await fetchCsv(e.url);
+    e.headers = grid[0]||[]; e.rows = grid.slice(1).filter(r=>r.length>1); e.state="ok";
+  }catch(err){ e.state="err"; e.error=err.message; }
+  render();
+}
+async function boot(){
+  await loadConfig();
+  await Promise.all(GRAINS.map(loadGrainLink));
+  render();
+  // fetch real sources in parallel; each re-renders as it lands
+  await Promise.all(GRAINS.map(loadGrainData));
+  render();
+}
+
+/* ---------- masthead ---------- */
+function paintMast(){
+  const c = STATE.config;
+  document.getElementById("mAsOf").textContent  = c.as_of_date || "—";
+  document.getElementById("mOwner").textContent = c.owner || "—";
+  document.getElementById("mPeriod").textContent = c.month_name || "—";
+  // month clock from month_name + as_of_date
+  let day=null, days=null, name=c.month_name||"";
+  const mm = /([A-Za-z]+)\s+(\d{4})/.exec(name||"");
+  if(mm){ const mi=MO.indexOf(mm[1].slice(0,3)); const yr=+mm[2];
+    if(mi>=0){ days=new Date(yr, mi+1, 0).getDate(); } }
+  const ad = /(\d{4})-(\d{2})-(\d{2})/.exec(c.as_of_date||"");
+  if(ad) day=+ad[3];
+  document.getElementById("mClockTop").textContent =
+    (name?name.toUpperCase():"—") + (day&&days?(" · DAY "+day+" OF "+days):"");
+  const frac = (day&&days)?Math.min(1,day/days):0;
+  document.getElementById("mFill").style.width=(frac*100).toFixed(1)+"%";
+  document.getElementById("mTick").style.left=(frac*100).toFixed(1)+"%";
+  document.getElementById("mFl").textContent = (day&&days)?("flat "+(frac*100).toFixed(0)+"%"):"—";
+}
+
+/* ---------- Availability ---------- */
+function computeAvailability(e){
+  const find = colFinder(e.headers);
+  const ci = { city:find("City","city"), cat:find("category","Category_1","Category"),
+    sku:find("SKU Name","Title/SKU","Title"), type:find("sku_type"),
+    wk:find("week_label","Week"), osa:find("osa_pct","Wt. OSA","Avg. OSA"), bench:find("Benchmark OSA") };
+  const clean=s=>String(s==null?"":s).trim();
+  const cap=s=>{ s=clean(s); return s?s.charAt(0).toUpperCase()+s.slice(1):s; };
+  const rows = e.rows.filter(r=>{ const t=clean(r[ci.type]); return t!=="#N/A"; });
+  const wkCount={}; rows.forEach(r=>{ const w=clean(r[ci.wk]); if(w) wkCount[w]=(wkCount[w]||0)+1; });
+  const weeks = Object.keys(wkCount).sort();
+  const cur=weeks[weeks.length-1], prev=weeks[weeks.length-2];
+  const meanOsa=f=>{ let s=0,n=0; for(const r of rows){ if(!f(r))continue; const v=numOf(r[ci.osa]); if(v!=null){s+=v;n++;} } return n?s/n:null; };
+  const osaByWeek={}; weeks.forEach(w=> osaByWeek[w]=meanOsa(r=>clean(r[ci.wk])===w));
+  // by city, cur & prev
+  const cityAgg={};
+  rows.forEach(r=>{ const w=clean(r[ci.wk]); const cy=cap(r[ci.city]); if(!cy) return;
+    (cityAgg[cy]||(cityAgg[cy]={cur:[],prev:[]}));
+    const v=numOf(r[ci.osa]); if(v==null) return;
+    if(w===cur) cityAgg[cy].cur.push(v); else if(w===prev) cityAgg[cy].prev.push(v); });
+  const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  const cities = Object.keys(cityAgg).map(cy=>({ city:cy, cur:mean(cityAgg[cy].cur), prev:mean(cityAgg[cy].prev),
+    n:cityAgg[cy].cur.length })).filter(c=>c.cur!=null).sort((a,b)=>b.cur-a.cur);
+  // by type
+  const typeAgg={};
+  rows.forEach(r=>{ if(clean(r[ci.wk])!==cur) return; const ty=clean(r[ci.type])||"—";
+    (typeAgg[ty]||(typeAgg[ty]={o:[],b:[]}));
+    const v=numOf(r[ci.osa]); if(v!=null) typeAgg[ty].o.push(v);
+    const b=numOf(r[ci.bench]); if(b!=null) typeAgg[ty].b.push(b); });
+  const order=["Top","Emerging","Long tail"];
+  const types = Object.keys(typeAgg).sort((a,b)=>{ const ia=order.indexOf(a),ib=order.indexOf(b); return (ia<0?9:ia)-(ib<0?9:ib); })
+    .map(ty=>({ type:ty, osa:mean(typeAgg[ty].o), bench:mean(typeAgg[ty].b), n:typeAgg[ty].o.length }));
+  const skus = new Set(rows.map(r=>clean(r[ci.sku])).filter(Boolean));
+  return { weeks, cur, prev, osaByWeek, cities, types, nSku:skus.size, nCity:cities.length,
+           curOsa:osaByWeek[cur], prevOsa:osaByWeek[prev] };
+}
+function osaClass(v,bench){ bench=bench||90; if(v>=bench) return "up"; if(v>=bench-5) return "hold"; return "down"; }
+function blockAvailability(){
+  const e = STATE.grains["Availability_Weekly"];
+  const head = '<div class="block-head"><div class="block-title"><h3>Availability</h3>'
+    +'<span class="q">On-shelf availability by city and SKU type — where stock is losing sales.</span></div>'
+    +'<div class="timebox"><span class="mins">live</span></div></div>';
+  if(e.kind==="placeholder"||e.kind==="empty") return sec("s-osa", head + pend("Availability_Weekly", e));
+  if(e.state!=="ok") return sec("s-osa", head + loadState(e));
+  let A; try{ A=computeAvailability(e); }catch(err){ return sec("s-osa", head+'<div class="pending">Could not compute: '+esc(err.message)+'</div>'); }
+  const wow = (A.curOsa!=null&&A.prevOsa!=null)? (A.curOsa-A.prevOsa):null;
+  const tiles = '<div class="tiles t4">'
+    +tile("OSA · "+(A.cur||"current wk"), P(A.curOsa), chip(wow,"pt"), "weighted mean across cities")
+    +tile("WoW vs "+(A.prev||"prev"), (wow==null?"—":(wow>=0?"+":"")+wow.toFixed(1)+"pt"), "", "on-shelf availability")
+    +tile("SKUs live", N(A.nSku), "", "distinct SKU names")
+    +tile("Cities", N(A.nCity), "", "with data this week")
+    +'</div>';
+  // city table
+  const rowsCity = A.cities.map(c=>{
+    const d = (c.cur!=null&&c.prev!=null)?(c.cur-c.prev):null;
+    return '<tr><td class="name">'+esc(c.city)+'</td>'
+      +'<td class="v '+ (c.cur>=90?"":"") +'">'+P(c.cur)+'</td>'
+      +'<td>'+P(c.prev)+'</td><td>'+(d==null?"—":chip(d,"pt"))+'</td>'
+      +'<td class="flat">'+N(c.n)+'</td></tr>';
+  }).join("");
+  const cityTbl = '<div class="sub-head"><span class="t">OSA by city — '+(A.cur||"")+'</span></div>'
+    +'<div class="tbl-wrap"><table class="m"><thead><tr>'
+    +'<th>City</th><th>OSA '+esc(A.cur||"")+'</th><th>OSA '+esc(A.prev||"")+'</th><th>WoW</th><th class="flat">rows</th>'
+    +'</tr></thead><tbody>'+rowsCity+'</tbody></table></div>';
+  // type table
+  const rowsType = A.types.map(t=>'<tr><td class="name">'+esc(t.type)+'</td>'
+    +'<td class="v"><span class="chip '+osaClass(t.osa,t.bench)+'">'+P(t.osa)+'</span></td>'
+    +'<td>'+(t.bench==null?"—":P(t.bench))+'</td><td class="flat">'+N(t.n)+'</td></tr>').join("");
+  const typeTbl = '<div class="sub-head"><span class="t">OSA by SKU type</span></div>'
+    +'<div class="tbl-wrap"><table class="m"><thead><tr><th>Type</th><th>OSA</th><th>Benchmark</th><th class="flat">rows</th></tr></thead><tbody>'+rowsType+'</tbody></table></div>';
+  return sec("s-osa", head + tiles + cityTbl + typeTbl
+    + '<div class="subnote">Source: '+esc(e.tab||"Availability_Weekly")+' · '+N(e.rows.length)+' rows · weeks '+A.weeks.join(", ")+'</div>');
+}
+
+/* ---------- Marketing + Keywords ---------- */
+function computeMarketing(e){
+  const find=colFinder(e.headers);
+  const cM=find("Month"), cBurn=find("TOTAL_BUDGET_BURNT"), cGmv=find("TOTAL_GMV"),
+        cImp=find("TOTAL_IMPRESSIONS"), cClk=find("TOTAL_CLICKS"), cConv=find("TOTAL_CONVERSIONS");
+  const per={};
+  e.rows.forEach(r=>{ const m=String(r[cM]||"").trim(); if(!m) return;
+    (per[m]||(per[m]={burn:0,gmv:0,imp:0,clk:0,conv:0}));
+    per[m].burn+=numOf(r[cBurn])||0; per[m].gmv+=numOf(r[cGmv])||0;
+    per[m].imp+=numOf(r[cImp])||0; per[m].clk+=numOf(r[cClk])||0; per[m].conv+=numOf(r[cConv])||0; });
+  const months=Object.keys(per).sort((a,b)=>MO.indexOf(a.slice(0,3))-MO.indexOf(b.slice(0,3)));
+  const last=months[months.length-1], a=per[last]||{};
+  return { months, last, agg:a, roi:a.burn?a.gmv/a.burn:null, ctr:a.imp?a.clk/a.imp*100:null,
+           gmvSeries:months.map(m=>per[m].gmv) };
+}
+function computeKeywords(e){
+  const find=colFinder(e.headers);
+  const cM=find("Month"), cSp=find("Sponsored SOV %"), cOr=find("Organic SOV %"),
+        cSe=find("Platform Keyword Searches"), cGmv=find("Total GMV"), cKw=find("Keyword");
+  const per={};
+  e.rows.forEach(r=>{ const m=String(r[cM]||"").trim(); if(!m) return;
+    (per[m]||(per[m]={se:0,sp:0,or:0,n:0,gmv:0}));
+    per[m].se+=numOf(r[cSe])||0; per[m].sp+=numOf(r[cSp])||0; per[m].or+=numOf(r[cOr])||0;
+    per[m].gmv+=numOf(r[cGmv])||0; per[m].n++; });
+  const months=Object.keys(per).sort((a,b)=>MO.indexOf(a.slice(0,3))-MO.indexOf(b.slice(0,3)));
+  const last=months[months.length-1], a=per[last]||{n:1};
+  const kw=new Set(e.rows.map(r=>String(r[cKw]||"").trim()).filter(Boolean));
+  return { last, searches:a.se, sov:a.sp/a.n, org:a.or/a.n, gmv:a.gmv, nKw:kw.size };
+}
+function blockMarketing(){
+  const em = STATE.grains["Marketing"], ek = STATE.grains["Keywords_Monthly"];
+  const head = '<div class="block-head"><div class="block-title"><h3>Marketing</h3>'
+    +'<span class="q">Spend, return, and share of voice — is the money working.</span></div>'
+    +'<div class="timebox"><span class="mins">live</span></div></div>';
+  let body="";
+  if(em.state==="ok"){
+    let M; try{ M=computeMarketing(em); }catch(err){ M=null; }
+    if(M){ const a=M.agg;
+      body += '<div class="tiles t4">'
+        +tile("Spend · "+M.last, L(a.burn), "", "budget burnt")
+        +tile("Ad GMV · "+M.last, L(a.gmv), "", spark(M.gmvSeries,74,21))
+        +tile("ROI", (M.roi==null?"—":M.roi.toFixed(2)+"×"), "", "GMV ÷ spend")
+        +tile("Conversions", N(a.conv), "", (M.ctr==null?"":"CTR "+M.ctr.toFixed(2)+"%"))
+        +'</div>'
+        +'<div class="subnote">Source: '+esc(em.tab||"Marketing")+' · '+N(em.rows.length)+' rows · months '+M.months.join(", ")+'</div>';
+    }
+  } else body += (em.kind==="placeholder"||em.kind==="empty") ? pend("Marketing",em) : loadState(em);
+  // keywords / SOV sub
+  if(ek.state==="ok"){
+    let K; try{ K=computeKeywords(ek); }catch(err){ K=null; }
+    if(K){
+      body += '<div class="sub-head"><span class="t">Share of voice — '+esc(K.last)+'</span></div>'
+        +'<div class="tiles t4">'
+        +tile("Keyword searches", N(K.searches), "", K.nKw+" keywords")
+        +tile("Sponsored SOV", P(K.sov), "", "paid share")
+        +tile("Organic SOV", P(K.org), "", "organic share")
+        +tile("Keyword GMV", L(K.gmv), "", "total attributed")
+        +'</div>'
+        +'<div class="subnote">Source: '+esc(ek.tab||"Keywords_Monthly")+' · '+N(ek.rows.length)+' rows</div>';
+    }
+  } else if(ek.kind==="placeholder"||ek.kind==="empty"){
+    body += '<div class="sub-head"><span class="t">Share of voice</span></div>'+pend("Keywords_Monthly",ek);
+  }
+  return sec("s-mkt", head + body);
+}
+
+/* ---------- source strip ---------- */
+function blockSources(){
+  const cards = GRAINS.map(g=>{
+    const e=STATE.grains[g]; let cls="ph", st="placeholder";
+    if(e.kind==="error"){ cls="err"; st="link error"; }
+    else if(e.kind==="placeholder"||e.kind==="empty"){ cls="ph"; st="not configured"; }
+    else if(e.state==="ok"){ cls="ok"; st=N(e.rows.length)+" rows"; }
+    else if(e.state==="loading"){ cls="run"; st="loading…"; }
+    else if(e.state==="err"){ cls="err"; st="load failed"; }
+    else { cls="run"; st="linked"; }
+    return '<div class="srcc '+cls+'"><span class="n">'+esc(g)+'</span><span class="st">'+esc(st)+'</span></div>';
+  }).join("");
+  const nLive = GRAINS.filter(g=>STATE.grains[g].state==="ok").length;
+  const nReal = GRAINS.filter(g=>["published","shared"].includes(STATE.grains[g].kind)).length;
+  return sec("s-src",
+    '<div class="block-head"><div class="block-title"><h3>Sources</h3>'
+    +'<span class="q">'+nLive+' of '+nReal+' linked sources loaded live · '+(GRAINS.length-nReal)+' still placeholders.</span></div>'
+    +'<div class="timebox"><span class="mins">live</span></div></div>'
+    +'<div class="src-strip">'+cards+'</div>');
+}
+
+/* ---------- small builders ---------- */
+function sec(id, inner){ return '<section class="block" id="'+id+'">'+inner+'</section>'; }
+function tile(k, v, deltas, foot){
+  return '<div class="tile"><div class="k">'+esc(k)+'</div><div class="v">'+v+'</div>'
+    +(deltas?'<div class="deltas">'+deltas+'</div>':'')
+    +(foot?'<div class="tfoot"><span class="chip">'+foot+'</span></div>':'')+'</div>';
+}
+function pend(name, e){
+  return '<div class="pending"><b>Not configured.</b> The <span class="mono">'+esc(name)+'</span> tab still holds the template placeholder. Add a real source link in its row 2 and this section fills in automatically.'
+    +(e.notes?'<br><span class="subnote" style="padding-left:0">expects: '+esc(e.notes)+'</span>':'')+'</div>';
+}
+function loadState(e){
+  if(e.state==="loading") return '<div class="pending">Loading '+esc(e.tab||e.key)+'…</div>';
+  if(e.state==="err") return '<div class="pending"><b>Load failed.</b> '+esc(e.error||"")+'<br><span class="subnote" style="padding-left:0">Published-sheet CSV reads only from an https origin — this works on Netlify, not from a local file.</span></div>';
+  return '<div class="pending">Linked — waiting to load.</div>';
+}
+
+/* ---------- render ---------- */
+function render(){
+  paintMast();
+  document.getElementById("blocks").innerHTML =
+    blockSources() + blockAvailability() + blockMarketing();
+}
+
+boot();
+</script>
+</body>
+</html>

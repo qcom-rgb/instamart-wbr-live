@@ -1,0 +1,12 @@
+# Instamart WBR — static site (no build step, no serverless functions).
+# The dashboard reads the template workbook via gviz JSONP and the published
+# source sheets via their CSV export, entirely in the browser.
+[build]
+  publish = "."
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
