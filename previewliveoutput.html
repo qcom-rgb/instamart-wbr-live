@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Instamart WBR — live output preview</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@500;600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+.pv{--bg:#F4F7F6;--surface:#fff;--s2:#EDF2F0;--s3:#E3EBE8;--ink:#101E1A;--ink2:#41544E;--ink3:#7A8C87;--rule:#DDE5E2;--rules:#C6D2CE;--accent:#0E5F51;--asoft:#DCEBE6;--good:#146F4C;--goods:#DBF0E4;--warn:#8F5B06;--warns:#F7E9CE;--bad:#9E3428;--bads:#F7E0DC;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;min-height:100vh}
+.pv *{box-sizing:border-box}
+.pv .mast{background:var(--surface);border-bottom:1px solid var(--rule);padding:14px 28px;display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
+.pv .wm{display:flex;align-items:baseline;gap:12px}.pv .wm h1{margin:0;font-family:"Newsreader",Georgia,serif;font-size:26px;font-weight:500;color:var(--accent)}
+.pv .wm .sub{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);font-weight:600}
+.pv .meta{display:flex;gap:22px;flex-wrap:wrap}.pv .mi .k{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);font-weight:600}
+.pv .mi .v{font-family:"IBM Plex Mono",monospace;font-size:13.5px;font-weight:500}
+.pv .shell{max-width:1180px;margin:0 auto;padding:22px 28px 60px}
+.pv .block{background:var(--surface);border:1px solid var(--rule);border-radius:5px;margin-bottom:18px;box-shadow:0 1px 2px rgba(16,30,26,.05),0 10px 26px -18px rgba(16,30,26,.3);overflow:hidden}
+.pv .bh{padding:16px 20px 14px;border-bottom:1px solid var(--rule)}.pv .bh h3{margin:0;font-family:"Newsreader",Georgia,serif;font-size:21px;font-weight:600}
+.pv .bh .q{color:var(--ink3);font-style:italic;font-family:"Newsreader",Georgia,serif;font-size:14.5px}
+.pv .tiles{display:grid;grid-template-columns:repeat(4,1fr)}
+.pv .tile{padding:12px 16px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}.pv .tile:nth-child(4n){border-right:none}
+.pv .tile .k{font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3);font-weight:600}
+.pv .tile .v{font-family:"IBM Plex Mono",monospace;font-size:20px;font-weight:600;margin-top:2px}
+.pv .tile .f{font-size:11px;color:var(--ink3);margin-top:5px}
+.pv .chip{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;padding:2px 7px;border-radius:3px}
+.pv .chip.up{background:var(--goods);color:var(--good)}.pv .chip.down{background:var(--bads);color:var(--bad)}.pv .chip.hold{background:var(--warns);color:var(--warn)}
+.pv .sh{padding:11px 20px 9px;background:var(--s2);border-bottom:1px solid var(--rule);border-top:1px solid var(--rules);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--ink2)}
+.pv table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.pv th{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:600;text-align:right;padding:9px 13px;border-bottom:1px solid var(--rule);white-space:nowrap}
+.pv th:first-child{text-align:left;padding-left:20px}
+.pv td{padding:8px 13px;border-bottom:1px solid var(--rule);text-align:right;font-family:"IBM Plex Mono",monospace;font-size:13px}
+.pv tr:last-child td{border-bottom:none}
+.pv td.name{text-align:left;font-family:"IBM Plex Sans",sans-serif;padding-left:20px}.pv td.v{font-weight:600}
+.pv .note{padding:9px 20px 12px;font-size:11.5px;color:var(--ink3)}
+</style>
+</head>
+<body>
+<div class="pv">
+ <div class="mast">
+   <div class="wm"><h1>Instamart</h1><span class="sub">Weekly Business Review</span></div>
+   <div class="meta">
+     <div class="mi"><div class="k">As of</div><div class="v">2026-09-03</div></div>
+     <div class="mi"><div class="k">Period</div><div class="v">September 2026</div></div>
+     <div class="mi"><div class="k">Owner</div><div class="v">—</div></div>
+   </div>
+ </div>
+ <div class="shell">
+   <div class="block">
+     <div class="bh"><h3>Availability</h3><span class="q">On-shelf availability by city and SKU type — where stock is losing sales.</span></div>
+     <div class="tiles">
+       <div class="tile"><div class="k">OSA · W4</div><div class="v">68.3%</div><div style="margin-top:5px"><span class="chip down">-2.6pt</span></div><div class="f">weighted mean, all cities</div></div>
+       <div class="tile"><div class="k">WoW vs W3</div><div class="v">-2.6pt</div><div class="f">on-shelf availability</div></div>
+       <div class="tile"><div class="k">SKUs live</div><div class="v">50</div><div class="f">distinct SKUs</div></div>
+       <div class="tile"><div class="k">Cities</div><div class="v">18</div><div class="f">with data this week</div></div>
+     </div>
+     <div class="sh">OSA by city — W4</div>
+     <table><thead><tr><th>City</th><th>OSA W4</th><th>OSA W3</th><th>WoW</th></tr></thead><tbody><tr><td class="name">Others</td><td class="v">82.5%</td><td>84.6%</td><td><span class="chip down">-2.0pt</span></td></tr><tr><td class="name">Kolkata</td><td class="v">78.4%</td><td>77.5%</td><td><span class="chip up">+0.9pt</span></td></tr><tr><td class="name">Bangalore</td><td class="v">76.0%</td><td>76.7%</td><td><span class="chip down">-0.7pt</span></td></tr><tr><td class="name">Delhi-NCR</td><td class="v">75.0%</td><td>77.9%</td><td><span class="chip down">-2.8pt</span></td></tr><tr><td class="name">Ahmedabad</td><td class="v">74.8%</td><td>76.4%</td><td><span class="chip down">-1.7pt</span></td></tr><tr><td class="name">Pune</td><td class="v">74.6%</td><td>77.3%</td><td><span class="chip down">-2.7pt</span></td></tr><tr><td class="name">Hyderabad</td><td class="v">72.9%</td><td>73.2%</td><td><span class="chip down">-0.3pt</span></td></tr><tr><td class="name">Lucknow</td><td class="v">70.3%</td><td>73.2%</td><td><span class="chip down">-2.9pt</span></td></tr><tr><td class="name">Chennai</td><td class="v">70.2%</td><td>74.5%</td><td><span class="chip down">-4.3pt</span></td></tr><tr><td class="name">Jaipur</td><td class="v">69.7%</td><td>69.6%</td><td><span class="chip up">+0.1pt</span></td></tr><tr><td class="name">Guwahati</td><td class="v">69.1%</td><td>73.0%</td><td><span class="chip down">-3.8pt</span></td></tr><tr><td class="name">Vizag</td><td class="v">63.1%</td><td>60.7%</td><td><span class="chip up">+2.4pt</span></td></tr><tr><td class="name">Mumbai</td><td class="v">62.8%</td><td>67.0%</td><td><span class="chip down">-4.1pt</span></td></tr><tr><td class="name">Dehradun</td><td class="v">62.4%</td><td>69.7%</td><td><span class="chip down">-7.3pt</span></td></tr><tr><td class="name">Central Goa</td><td class="v">60.3%</td><td>68.8%</td><td><span class="chip down">-8.4pt</span></td></tr><tr><td class="name">Punjab</td><td class="v">56.5%</td><td>65.3%</td><td><span class="chip down">-8.8pt</span></td></tr><tr><td class="name">Bhubaneswar</td><td class="v">51.0%</td><td>50.9%</td><td><span class="chip up">+0.1pt</span></td></tr><tr><td class="name">Thiruvananthapuram</td><td class="v">41.4%</td><td>42.9%</td><td><span class="chip down">-1.5pt</span></td></tr></tbody></table>
+     <div class="sh">OSA by SKU type</div>
+     <table><thead><tr><th>Type</th><th>OSA</th><th>Benchmark</th><th>rows</th></tr></thead><tbody><tr><td class="name">Top</td><td class="v"><span class="chip up">76.9%</span></td><td>58.9%</td><td>3,172</td></tr><tr><td class="name">Emerging</td><td class="v"><span class="chip up">63.5%</span></td><td>42.7%</td><td>1,523</td></tr><tr><td class="name">Long tail</td><td class="v"><span class="chip up">61.8%</span></td><td>26.2%</td><td>3,060</td></tr></tbody></table>
+     <div class="note">Source: Availability_Weekly_IM · 14,759 rows · weeks W1, W3, W4</div>
+   </div>
+   <div class="block">
+     <div class="bh"><h3>Marketing</h3><span class="q">Spend, return, and share of voice — is the money working.</span></div>
+     <div class="tiles">
+       <div class="tile"><div class="k">Spend · Aug</div><div class="v">₹19.9L</div><div class="f">budget burnt</div></div>
+       <div class="tile"><div class="k">Ad GMV · Aug</div><div class="v">₹106.0L</div><div class="f">attributed GMV</div></div>
+       <div class="tile"><div class="k">ROI</div><div class="v">5.33×</div><div class="f">GMV ÷ spend</div></div>
+       <div class="tile"><div class="k">Conversions</div><div class="v">36,830</div><div class="f">CTR 2.92%</div></div>
+     </div>
+     <div class="sh">Share of voice — Aug</div>
+     <div class="tiles">
+       <div class="tile"><div class="k">Keyword searches</div><div class="v">33,43,005</div><div class="f">231 keywords</div></div>
+       <div class="tile"><div class="k">Sponsored SOV</div><div class="v">6.6%</div><div class="f">paid share</div></div>
+       <div class="tile"><div class="k">Organic SOV</div><div class="v">13.1%</div><div class="f">organic share</div></div>
+       <div class="tile"><div class="k">Keyword GMV</div><div class="v">₹47.5L</div><div class="f">total attributed</div></div>
+     </div>
+     <div class="note">Source: Marketing (1,505 rows) · Keywords_Monthly (469 rows)</div>
+   </div>
+ </div>
+</div>
+</body>
+</html>
