@@ -567,10 +567,10 @@ table.m{font-variant-numeric:tabular-nums;min-width:900px}
     <h2>Sections</h2>
     <ol id="rail">
       <li><a href="#s-src" class="on">Sources</a></li>
-      <li><a href="#s-osa">Availability</a></li>
-      <li><a href="#s-mkt">Marketing</a></li>
+      <li><a href="#s-mtd">1 · P&amp;L</a></li>
+      <li><a href="#s-osa">2 · Availability</a></li>
+      <li><a href="#s-mkt">3 · Marketing</a></li>
       <li class="sub"><a href="#s-mkt">Share of voice</a></li>
-      <li class="todo"><span>P&amp;L — next</span></li>
       <li class="todo"><span>Revenue — next</span></li>
       <li class="todo"><span>JBP — next</span></li>
     </ol>
@@ -770,6 +770,8 @@ function paintMast(){
 }
 
 /* ---------- Availability ---------- */
+const FIXED_BENCH = { top:95, emerging:90, longtail:85 };
+function fixedBench(type){ const k=String(type||"").toLowerCase().replace(/\s+/g,""); return FIXED_BENCH[k]!=null?FIXED_BENCH[k]:90; }
 function computeAvailability(e){
   const find = colFinder(e.headers);
   const ci = { city:find("City","city"), cat:find("category","Category_1","Category"),
@@ -800,7 +802,7 @@ function computeAvailability(e){
     const b=numOf(r[ci.bench]); if(b!=null) typeAgg[ty].b.push(b); });
   const order=["Top","Emerging","Long tail"];
   const types = Object.keys(typeAgg).sort((a,b)=>{ const ia=order.indexOf(a),ib=order.indexOf(b); return (ia<0?9:ia)-(ib<0?9:ib); })
-    .map(ty=>({ type:ty, osa:mean(typeAgg[ty].o), bench:mean(typeAgg[ty].b), n:typeAgg[ty].o.length }));
+    .map(ty=>({ type:ty, osa:mean(typeAgg[ty].o), bench:fixedBench(ty), n:typeAgg[ty].o.length }));
   const skus = new Set(rows.map(r=>clean(r[ci.sku])).filter(Boolean));
   return { weeks, cur, prev, osaByWeek, cities, types, nSku:skus.size, nCity:cities.length,
            curOsa:osaByWeek[cur], prevOsa:osaByWeek[prev] };
@@ -841,6 +843,52 @@ function blockAvailability(){
     +'<div class="tbl-wrap"><table class="m"><thead><tr><th>Type</th><th>OSA</th><th>Benchmark</th><th class="flat">rows</th></tr></thead><tbody>'+rowsType+'</tbody></table></div>';
   return sec("s-osa", head + tiles + cityTbl + typeTbl
     + '<div class="subnote">Source: '+esc(e.tab||"Availability_Weekly")+' · '+N(e.rows.length)+' rows · weeks '+A.weeks.join(", ")+'</div>');
+}
+
+/* ---------- P&L (financial matrix) ---------- */
+function computePnl(e){
+  // Matrix sheet: e.headers is the "Updated Till" row; e.rows[0] is the real header
+  // (Months >> | Achievement % | Target | Sep MTD | Sep LE | Aug-26 …); e.rows[1..] are
+  // the P&L lines (label in column 1). Values arrive already formatted by the sheet.
+  const hdr = (e.rows[0]||[]).map(x=>String(x||"").trim());
+  const H = (...names)=>{ for(const nm of names){ const i=hdr.findIndex(h=>h.toLowerCase()===nm.toLowerCase()); if(i>=0) return i; } for(const nm of names){ const i=hdr.findIndex(h=>h.toLowerCase().indexOf(nm.toLowerCase())>=0); if(i>=0) return i; } return -1; };
+  const iAch=H("Achievement %","Achievement"), iTgt=H("Target"), iMtd=H("Sep MTD","MTD"), iLE=H("Sep LE","LE"), iLm=H("Aug-26","Aug");
+  const lmName = iLm>=0 ? hdr[iLm] : "LM";
+  const lines=[];
+  for(let r=1; r<Math.min(e.rows.length,25); r++){
+    const row=e.rows[r]||[]; const label=String(row[1]||"").trim(); if(!label) continue;
+    lines.push({ label, ach:String(row[iAch]||"").trim(), target:String(row[iTgt]||"").trim(),
+      mtd:String(row[iMtd]||"").trim(), le:String(row[iLE]||"").trim(), lm:iLm>=0?String(row[iLm]||"").trim():"" });
+  }
+  const by={}; lines.forEach(l=> by[l.label.toLowerCase()]=l);
+  const asOf=(e.headers&&e.headers[4])?String(e.headers[4]).trim():"";
+  return { lines, by, lmName, asOf };
+}
+function blockPnl(){
+  const e=STATE.grains["PnL"];
+  const head='<div class="block-head"><div class="block-title"><h3>P&amp;L</h3>'
+    +'<span class="q">Where the month lands, line by line — MTD, landing estimate, and target.</span></div>'
+    +'<div class="timebox"><span class="mins">live</span></div></div>';
+  if(e.kind==="placeholder"||e.kind==="empty") return sec("s-mtd", head+pend("PnL",e));
+  if(e.state!=="ok") return sec("s-mtd", head+loadState(e));
+  let Pn; try{ Pn=computePnl(e); }catch(err){ return sec("s-mtd", head+'<div class="pending">Could not parse P&amp;L: '+esc(err.message)+'</div>'); }
+  const isCost=l=>/cogs|s ?& ?d|discount|perf ads|asset spend|meta ads|silb|buffer|xpresso|jbp|consultancy|sampling|marketing/i.test(l);
+  const L5=v=>{ const n=numOf(v); return n==null?"—":"₹"+(n/1e5).toFixed(1)+"L"; };
+  const ach=(a,l)=>{ const n=numOf(a); if(n==null) return "—"; const cls=isCost(l)?(n<=100?"up":"down"):(n>=100?"up":(n>=95?"hold":"down")); return '<span class="chip '+cls+'">'+n.toFixed(1)+'%</span>'; };
+  const g=k=>Pn.by[k]||{};
+  const ns=g("net sale"),gmv=g("gmv"),cm2=g("cm2"),cm2p=g("cm2%");
+  const tiles='<div class="tiles t4">'
+    +tile("Net Sale · LE",L5(ns.le),ach(ns.ach,"net sale"),"target "+(ns.target?L5(ns.target):"—"))
+    +tile("GMV · LE",L5(gmv.le),ach(gmv.ach,"gmv"),"target "+(gmv.target?L5(gmv.target):"—"))
+    +tile("CM2 · LE",L5(cm2.le),ach(cm2.ach,"cm2"),"MTD "+(cm2.mtd?L5(cm2.mtd):"—"))
+    +tile("CM2 %",(cm2p.mtd||cm2p.le||"—"),"","target "+(cm2p.target||"—"))
+    +'</div>';
+  const rows=Pn.lines.map(l=>'<tr><td class="name">'+esc(l.label)+'</td>'
+    +'<td>'+(l.mtd||"—")+'</td><td class="v">'+(l.le||"—")+'</td><td>'+(l.target||"—")+'</td>'
+    +'<td>'+ach(l.ach,l.label)+'</td><td class="flat">'+(l.lm||"—")+'</td></tr>').join("");
+  const tbl='<div class="sub-head"><span class="t">Full P&amp;L — Sep</span></div>'
+    +'<div class="tbl-wrap"><table class="m"><thead><tr><th>Line</th><th>Sep MTD</th><th>Sep LE</th><th>Target</th><th>Ach%</th><th class="flat">'+esc(Pn.lmName||"LM")+'</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  return sec("s-mtd", head+tiles+tbl+'<div class="subnote">Source: PnL · updated till '+esc(Pn.asOf||"—")+' · Ach% = landing estimate ÷ target; cost lines read inversely (under-spend is green).</div>');
 }
 
 /* ---------- Marketing + Keywords ---------- */
@@ -951,7 +999,7 @@ function loadState(e){
 function render(){
   paintMast();
   document.getElementById("blocks").innerHTML =
-    blockSources() + blockAvailability() + blockMarketing();
+    blockSources() + blockPnl() + blockAvailability() + blockMarketing();
 }
 
 boot();
