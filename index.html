@@ -957,6 +957,136 @@ function blockMarketing(){
   return sec("s-mkt", head + body);
 }
 
+/* ---------- Availability: interactive OSA grid (Blinkit-style) ---------- */
+const TYPEL={top:"Top",emerging:"Emerging",longtail:"Long tail",other:"Other"};
+function normType(t){ const k=String(t||"").toLowerCase().replace(/\s+/g,""); if(k.indexOf("top")>=0)return"top"; if(k.indexOf("emerg")>=0)return"emerging"; if(k.indexOf("long")>=0)return"longtail"; return "other"; }
+let osaGroup="type";   // "type" | "cat"
+let osaSel=null;       // [skuIndex, cityIndex] of the open detail cell
+
+function computeOsaGrid(e){
+  if(e._grid) return e._grid;
+  const find=colFinder(e.headers);
+  const ci={ city:find("City","city"), cat:find("category","Category_1","Category"),
+    sku:find("SKU Name","Title/SKU","Title"), type:find("sku_type"),
+    wk:find("week_label","Week"), osa:find("osa_pct","Wt. OSA","Avg. OSA") };
+  const clean=s=>String(s==null?"":s).trim();
+  const cap=s=>{ s=clean(s); return s?s.charAt(0).toUpperCase()+s.slice(1):s; };
+  const rows=e.rows.filter(r=>{ const t=clean(r[ci.type]); return t && t!=="#N/A"; });
+  const wkSeen={}; rows.forEach(r=>{ const w=clean(r[ci.wk]); if(w) wkSeen[w]=1; });
+  const weeks=Object.keys(wkSeen).sort();
+  const cur=weeks[weeks.length-1], prev=weeks[weeks.length-2];
+  const cityCount={}; rows.forEach(r=>{ const c=cap(r[ci.city]); if(c) cityCount[c]=(cityCount[c]||0)+1; });
+  const cities=Object.keys(cityCount).sort((a,b)=>cityCount[b]-cityCount[a]);
+  const skuMeta={}, cell={};
+  rows.forEach(r=>{ const name=clean(r[ci.sku]); if(!name) return;
+    if(!skuMeta[name]) skuMeta[name]={cat:clean(r[ci.cat])||"Uncategorised", type:normType(r[ci.type])};
+    const city=cap(r[ci.city]), w=clean(r[ci.wk]), v=numOf(r[ci.osa]);
+    if(!city||!w||v==null) return;
+    const k=name+"|"+city; (cell[k]||(cell[k]={})); (cell[k][w]||(cell[k][w]=[])).push(v);
+  });
+  const mean=a=>a&&a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  const skus=Object.keys(skuMeta).map(name=>({name, cat:skuMeta[name].cat, type:skuMeta[name].type}))
+    .sort((a,b)=> (a.cat||"").localeCompare(b.cat||"") || a.name.localeCompare(b.name));
+  const osa={};
+  skus.forEach(s=>{ osa[s.name]={}; const bm=fixedBench(s.type);
+    cities.forEach(city=>{ const c=cell[s.name+"|"+city];
+      if(!c){ osa[s.name][city]=null; return; }
+      const wv={}; weeks.forEach(w=> wv[w]=mean(c[w]));
+      const present=weeks.map(w=>wv[w]).filter(v=>v!=null);
+      if(!present.length){ osa[s.name][city]=null; return; }
+      const tw=wv[cur], lw=wv[prev];
+      osa[s.name][city]={ weeks:wv, tw:tw==null?null:+tw.toFixed(1), lw:lw==null?null:+lw.toFixed(1),
+        monthAvg:+(present.reduce((a,b)=>a+b,0)/present.length).toFixed(1),
+        weeksBelow:present.filter(v=>v<bm).length, bm };
+    });
+  });
+  const cats=[...new Set(skus.map(s=>s.cat))].sort();
+  return (e._grid={ skus, cities, weeks, cur, prev, osa, cats });
+}
+function osaMark(c){ if(!c||c.tw==null) return {level:"na"}; return {level: c.tw<c.bm?"low":"ok"}; }
+function osaDot(m){ if(m.level==="na") return ""; return '<span class="d '+(m.level==="ok"?"d-ok":"d-bad")+'"></span>'; }
+function osaCellHtml(si,ci,G){
+  const s=G.skus[si], city=G.cities[ci], c=G.osa[s.name][city], m=osaMark(c);
+  if(m.level==="na") return '<td class="oc na">–</td>';
+  const dv=c.lw==null?null:+(c.tw-c.lw).toFixed(1);
+  const sub=c.lw==null?'lw –':'lw '+c.lw.toFixed(1)+' <i class="'+(dv>=0?"u":"dn")+'">'+(dv>=0?"▲":"▼")+Math.abs(dv).toFixed(1)+'</i>';
+  return '<td class="oc s-'+m.level+'" data-si="'+si+'" data-ci="'+ci+'">'
+    +'<div class="ocv">'+osaDot(m)+'<b>'+c.tw.toFixed(1)+'</b></div><div class="ocl">'+sub+'</div></td>';
+}
+function osaGridHtml(G){
+  const groups={};
+  G.skus.forEach((s,si)=>{ const g=osaGroup==="type"?(TYPEL[s.type]||"Other"):s.cat; (groups[g]=groups[g]||[]).push(si); });
+  const order=osaGroup==="type"?["Top","Emerging","Long tail","Other"]:G.cats.slice();
+  const ncol=G.cities.length+3;
+  let body="";
+  order.filter(g=>groups[g]).forEach(g=>{
+    body+='<tr class="band"><td colspan="'+ncol+'">'+esc(g)+'<span class="bc">'+groups[g].length+' SKU'+(groups[g].length>1?"s":"")+'</span></td></tr>';
+    groups[g].forEach(si=>{ const s=G.skus[si], other=osaGroup==="type"?s.cat:(TYPEL[s.type]||"Other");
+      let n=0,dn=0; G.cities.forEach(city=>{ const c=G.osa[s.name][city]; if(c&&c.tw!=null){ n+=c.tw; dn++; } });
+      body+='<tr><td class="sku">'+esc(s.name)+'<span class="hint">'+esc(other)+'</span></td>'
+        +'<td class="bm">'+fixedBench(s.type)+'%</td>'
+        +'<td class="ai">'+(dn?(n/dn).toFixed(1):"–")+'</td>'
+        +G.cities.map((city,ci)=>osaCellHtml(si,ci,G)).join('')+'</tr>';
+    });
+  });
+  if(!body) body='<tr><td colspan="'+ncol+'" class="empty">No availability rows.</td></tr>';
+  return '<div class="tbl-wrap"><table class="m osa"><thead><tr><th>SKU</th><th>Bench</th><th>All-India</th>'
+    +G.cities.map(c=>'<th class="ch">'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+body+'</tbody></table></div>';
+}
+function osaTiles(G){
+  let wN=0,wD=0,tN=0,tD=0,below=0,chronic=0,live=0;
+  G.skus.forEach(s=>{ const bm=fixedBench(s.type); G.cities.forEach(city=>{ const c=G.osa[s.name][city]; if(!c||c.tw==null) return;
+    live++; wN+=c.tw; wD++; if(s.type==="top"){tN+=c.tw;tD++;} if(c.tw<bm) below++; if(c.weeksBelow>=2) chronic++; }); });
+  const t=(k,v,sub,cls)=>'<div class="tile"><div class="k">'+k+'</div><div class="v'+(cls?" "+cls:"")+'">'+v+'</div><div class="deltas"><span class="chip plain">'+sub+'</span></div></div>';
+  return '<div class="tiles t4">'
+    +t("Mean OSA · "+G.cur,(wD?(wN/wD).toFixed(1):"—")+"%","across "+live+" live cells")
+    +t("Top-type OSA",(tD?(tN/tD).toFixed(1):"—")+"%","benchmark 95%")
+    +t("Cells below bench",String(below),"OSA under type benchmark",below?"red":"")
+    +t("Chronic cells",String(chronic),"below bench 2+ of "+G.weeks.length+" wks",chronic?"amber":"")
+    +'</div>';
+}
+function rcaPanel(G){
+  if(!osaSel) return "";
+  const s=G.skus[osaSel[0]]; if(!s) return ""; const city=G.cities[osaSel[1]]; const c=G.osa[s.name][city];
+  const kv=(k,v,cls)=>'<div class="kv"><span>'+k+'</span><b class="'+(cls||"")+'">'+v+'</b></div>';
+  const chips=(!c||c.tw==null)?'<span class="chip flatc">No data this week</span>'
+    :(c.tw<c.bm?'<span class="chip down">Below benchmark</span>':'<span class="chip up">At or above benchmark</span>');
+  const wk=c?'<div class="wk4">'+G.weeks.map(w=>{ const v=c.weeks[w]; return '<div class="w4'+(v!=null&&v<c.bm?" lo":"")+'"><span>'+w+'</span><b>'+(v==null?"–":v.toFixed(1))+'</b></div>'; }).join('')+'</div>':"";
+  return '<div class="rca-back" data-close="1"></div><aside class="rca">'
+    +'<div class="rca-h"><div><div class="rca-t">'+esc(s.name)+'</div><div class="rca-s">'+esc(city)+' · '+esc(TYPEL[s.type]||s.type)+' · '+esc(s.cat)+'</div></div>'
+    +'<button class="rca-x" data-close="1" aria-label="Close">×</button></div>'
+    +'<div class="rca-b"><div class="rca-chips">'+chips+'</div>'
+    +'<div class="rca-sec">Availability</div>'
+    +(c?kv("OSA "+G.cur+" (this week)",c.tw==null?"–":c.tw.toFixed(1)+"%"):"")
+    +(c?kv("OSA "+G.prev+" (last week)",c.lw==null?"–":c.lw.toFixed(1)+"%"):"")
+    +kv("Benchmark ("+(TYPEL[s.type]||s.type)+")",(c?c.bm:fixedBench(s.type))+"%")
+    +(c?kv("Month average",c.monthAvg.toFixed(1)+"%"):"")
+    +wk
+    +(c?kv("Weeks below benchmark",c.weeksBelow+" of "+G.weeks.length,c.weeksBelow>=2?"bad":""):"")
+    +'<div class="note">Built from Availability_Weekly (OSA by SKU x city x week). Stock, days-of-cover and PO fields are not in this feed.</div>'
+    +'</div></aside>';
+}
+function blockAvailability2(){
+  const e=STATE.grains["Availability_Weekly"];
+  const head='<div class="block-head"><div class="block-title"><h3>Availability</h3>'
+    +'<span class="q">On-shelf availability by SKU and city — click any cell for the week-by-week detail.</span></div>'
+    +'<div class="timebox"><span class="mins">live</span></div></div>';
+  if(e.kind==="placeholder"||e.kind==="empty") return sec("s-osa", head+pend("Availability_Weekly",e));
+  if(e.state!=="ok") return sec("s-osa", head+loadState(e));
+  let G; try{ G=computeOsaGrid(e); }catch(err){ return sec("s-osa", head+'<div class="pending">Could not build grid: '+esc(err.message)+'</div>'); }
+  const filters='<div class="filters"><div class="fset"><span class="fl">Group by</span>'
+    +'<button class="fc'+(osaGroup==="type"?" on":"")+'" data-osagroup="type">SKU type</button>'
+    +'<button class="fc'+(osaGroup==="cat"?" on":"")+'" data-osagroup="cat">Category</button></div></div>';
+  const legend='<div class="legend"><span><i class="d d-ok"></i>at/above benchmark</span>'
+    +'<span><i class="d d-bad"></i>below benchmark</span>'
+    +'<span><span class="sw" style="background:var(--good-soft)"></span>ok cell</span>'
+    +'<span><span class="sw" style="background:var(--bad-soft)"></span>below-bench cell</span>'
+    +'<span>&#9650;&#9660; vs last week ('+G.prev+')</span></div>';
+  return sec("s-osa", head+osaTiles(G)+filters+osaGridHtml(G)+legend
+    +'<div class="subnote">Source: '+esc(e.tab||"Availability_Weekly")+' · '+N(e.rows.length)+' rows · '+G.skus.length+' SKUs x '+G.cities.length+' cities · weeks '+G.weeks.join(", ")+'</div>'
+    +rcaPanel(G));
+}
+
 /* ---------- source strip ---------- */
 function blockSources(){
   const cards = GRAINS.map(g=>{
@@ -999,9 +1129,16 @@ function loadState(e){
 function render(){
   paintMast();
   document.getElementById("blocks").innerHTML =
-    blockSources() + blockPnl() + blockAvailability() + blockMarketing();
+    blockSources() + blockPnl() + blockAvailability2() + blockMarketing();
 }
 
+/* delegated interactions for the availability grid */
+document.addEventListener("click", function(ev){
+  const cl=ev.target.closest("[data-close]"); if(cl){ osaSel=null; render(); return; }
+  const cell=ev.target.closest("td.oc[data-si]"); if(cell){ osaSel=[+cell.dataset.si,+cell.dataset.ci]; render(); return; }
+  const gp=ev.target.closest("[data-osagroup]"); if(gp){ osaGroup=gp.dataset.osagroup; render(); return; }
+});
+document.addEventListener("keydown", function(ev){ if(ev.key==="Escape" && osaSel){ osaSel=null; render(); } });
 boot();
 </script>
 </body>
